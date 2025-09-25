@@ -1,0 +1,1 @@
+<b>💠 SALDO ADICIONADO VIA PIX AUTOMATICO! 💠\n\n🆔| ID DO USUARIO: </b><b>{id}</b><b>\n\n👤| USUARIO: {username}\n\n💰 VALOR: R$ {valor}\n\n🔑 ID DO PAGAMENTO: {id_pagamento}🔑</b>

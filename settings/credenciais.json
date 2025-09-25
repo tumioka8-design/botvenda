@@ -1,0 +1,23 @@
+{
+    "maintance": "off",
+    "version": "1.0_Beta",
+    "id_dono": "5945288876",
+    "user_bot": "https://t.me/destruizeus",
+    "api-bot": "8315974401:AAEIktAOjWp5AdnArEaQJ2TnmWWWAb3wA8M",
+    "separador": "|",
+    "token_mp": "futuramente te explico isso",
+    "vencimento_bot": "12/12/2050",
+    "link_suporte": "@raichuccs2",
+    "status_pix_manu": "on",
+    "status_pix_auto": "off",
+    "bonus_registro": 0.0,
+    "bonus_pix": 1,
+    "bonus_pix_min": 0,
+    "min_pix": 10.0,
+    "max_pix": 999.0,
+    "afiliados": "on",
+    "expiracao_pix": 15,
+    "pontos_by_indicate_buy": 5,
+    "min_points_saldo": 30,
+    "multiplicador_pontos": 0.1
+}

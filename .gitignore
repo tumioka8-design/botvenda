@@ -1,0 +1,16 @@
+# Arquivos de cache e compilados do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Arquivos de log e erro
+*.log
+bot_error.log
+
+# Ambientes virtuais
+venv/
+.venv/
+
+# Arquivos de configuração de IDEs
+.vscode/
+.idea/

@@ -1,0 +1,22 @@
+{
+    "ccs": [
+        {
+            "nome": "1234567812341234",
+            "valor": 60.0,
+            "descricao": "infinity",
+            "email": "5",
+            "senha": "02/28",
+            "duracao": "123"
+        },
+        {
+            "nome": "1234123458664858",
+            "valor": 100.0,
+            "descricao": "black",
+            "email": "1234123458664858",
+            "senha": "02/28",
+            "duracao": "243",
+            "titular": "oloco america",
+            "cpf": "98753467290"
+        }
+    ]
+}

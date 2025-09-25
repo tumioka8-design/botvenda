@@ -1,0 +1,11 @@
+{
+    "status_notify": "off",
+    "id_grupo": 101010,
+    "tipo_texto": 0,
+    "time_min_compras": 120,
+    "time_max_compras": 700,
+    "time_min_saldo": 400,
+    "time_max_saldo": 1200,
+    "saldo_min": 1,
+    "saldo_max": 20
+}

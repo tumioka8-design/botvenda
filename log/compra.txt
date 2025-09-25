@@ -1,0 +1,1 @@
+<b>USUÁRIO COMPROU UM LOGIN</b> 🛍\n\n👤 <b>ID DO USUÁRIO: {id}</b>\n\n⚜️ <b>{servico}</b> ⚜️\n\n<b>💰 VALOR LOGIN: R$ {valor}</b>\n\n<b>📺 EMAIL: {email} 📺</b>\n\n<b>🔑 SENHA: {senha} 🔑</b>
