@@ -23,11 +23,19 @@ class Botoes:
 
     @staticmethod
     def desenvolvedor():
-        return "👨‍💻 Desenvolvedor do Bot"
+        return "👨‍💻 DESENVOLVEDOR DO BOT"
 
     @staticmethod
     def download_historico():
         return "🗂 BAIXAR HISTORICO"
+
+    @staticmethod
+    def ggs():
+        return "✨ GGs (Geradas)"
+
+    @staticmethod
+    def laras():
+        return "🍊 Laras"
 
     @staticmethod
     def perfil():
@@ -48,10 +56,6 @@ class Botoes:
     @staticmethod
     def servicos():
         return "🛍️ SERVIÇOS"
-
-    @staticmethod
-    def tc():
-        return "📈 TC"
 
     @staticmethod
     def trocar_pontos_por_saldo():
@@ -105,6 +109,10 @@ class Textos:
         return "💳 𝗖𝗖𝘀 | 𝗖𝗔𝗥𝗧Õ𝗘𝗦 𝗗𝗘 𝗖𝗥É𝗗𝗜𝗧𝗢"
 
     @staticmethod
+    def menu_comprar_gg():
+        return "✨ 𝗚𝗚𝘀 | GERADAS"
+
+    @staticmethod
     def confirmacao_compra_cc(saldo_usuario, valor_cc, nivel, numero, validade, cvv, nome_titular, cpf):
         # Mascara os dados sensíveis para exibição
         numero_mascarado = f"{str(numero)[:6]}{'*' * (len(str(numero)) - 6)}"
@@ -129,7 +137,10 @@ class Textos:
 
     @staticmethod
     def perfil(message):
-        return f"✨ <b>Suas Informações</b>\n\n<i>- Aqui você pode visualizar os detalhes da sua conta.</i>\n\n\n- 💰 <b>Carteira:</b>\n🆔 <b>ID da carteira:</b> <code>{message.chat.id}</code>\n💸 <b>Saldo:</b> <code>R${api.InfoUser.saldo(message.chat.id)}</code>\n\n\n- 🏆 <b>Indicação:</b>\n🥇 <b>Pontos de indicação:</b> <code>{api.InfoUser.pontos_indicacao(message.chat.id)}</code>\n🏆 <b>Pessoas que você indicou:</b> <code>{api.InfoUser.quantidade_afiliados(message.chat.id)}</code>\n💰 <b>link de indicação:</b> https://t.me/{api.CredentialsChange.user_bot()}?start={message.chat.id}\n\n\n- 🛍 <b>Compras:</b>\n🛒 <b>Logins comprados:</b> <code>{api.InfoUser.total_compras(message.chat.id)}</code>\n💠 <b>Pix inseridos:</b> <code>R${api.InfoUser.pix_inseridos(message.chat.id)}</code>\n🎁 <b>Gifts resgatados:</b> <code>R${api.InfoUser.gifts_resgatados(message.chat.id)}</code>"
+        # Garante que estamos usando o ID do usuário, não do chat.
+        user_id = message.from_user.id
+
+        return f"✨ <b>Suas Informações</b>\n\n<i>- Aqui você pode visualizar os detalhes da sua conta.</i>\n\n\n- 💰 <b>Carteira:</b>\n🆔 <b>ID da carteira:</b> <code>{user_id}</code>\n💸 <b>Saldo:</b> <code>R${api.InfoUser.saldo(user_id):.2f}</code>\n\n\n- 🏆 <b>Indicação:</b>\n🥇 <b>Pontos de indicação:</b> <code>{api.InfoUser.pontos_indicacao(user_id)}</code>\n🏆 <b>Pessoas que você indicou:</b> <code>{api.InfoUser.quantidade_afiliados(user_id)}</code>\n💰 <b>link de indicação:</b> https://t.me/{api.CredentialsChange.user_bot()}?start={user_id}\n\n\n- 🛍 <b>Compras:</b>\n🛒 <b>Logins comprados:</b> <code>{api.InfoUser.total_compras(user_id)}</code>\n💠 <b>Pix inseridos:</b> <code>R${api.InfoUser.pix_inseridos(user_id):.2f}</code>\n🎁 <b>Gifts resgatados:</b> <code>R${api.InfoUser.gifts_resgatados(user_id):.2f}</code>"
 
     @staticmethod
     def pix_automatico():

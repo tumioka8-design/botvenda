@@ -6,7 +6,7 @@
     "api-bot": "8315974401:AAEIktAOjWp5AdnArEaQJ2TnmWWWAb3wA8M",
     "separador": "|",
     "token_mp": "futuramente te explico isso",
-    "vencimento_bot": "12/12/2050",
+    "vencimento_bot": "03/01/2026",
     "link_suporte": "@raichuccs2",
     "status_pix_manu": "on",
     "status_pix_auto": "off",
@@ -19,5 +19,6 @@
     "expiracao_pix": 15,
     "pontos_by_indicate_buy": 5,
     "min_points_saldo": 30,
-    "multiplicador_pontos": 0.1
+    "multiplicador_pontos": 0.1,
+    "chave_pix_manual": "paraty.cell.rj@gmail.com"
 }

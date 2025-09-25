@@ -91,15 +91,524 @@ def painel_admin(message):
         bt6 = InlineKeyboardButton('💠 CONFIGURAR PIX', callback_data='configurar_pix')
         bt7 = InlineKeyboardButton('🛎 NOTIFICAÇÕES FAKE', callback_data='configurar_notificacoes_fake')
         bt8 = InlineKeyboardButton('🎁 GIFT CARD 🎁', callback_data='gift_card')
-        bt9 = InlineKeyboardButton("💳 CONFIGURAR CC'S", callback_data='configurar_ccs')
-        markup = InlineKeyboardMarkup([[bt], [bt2], [bt9], [bt3], [bt4], [bt5], [bt6], [bt7], [bt8]])
+        bt_ccs = InlineKeyboardButton("💳 CONFIGURAR CC'S", callback_data='configurar_ccs')
+        bt_laras = InlineKeyboardButton('🍊 CONFIGURAR LARAS', callback_data='configurar_laras')
+        bt_ggs = InlineKeyboardButton('✨ CONFIGURAR GGS', callback_data='configurar_ggs')
+        markup = InlineKeyboardMarkup([[bt], [bt2, bt_ccs], [bt_laras, bt_ggs], [bt3, bt4], [bt5, bt6], [bt7, bt8]])
         if message.text != '/admin':
-            bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+            try:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+            except telebot.apihelper.ApiTelegramException as e:
+                if 'message is not modified' not in e.description:
+                    raise
         else:
             bot.send_message(message.chat.id, texto, parse_mode='HTML', reply_markup=markup)
     else:
         bot.reply_to(message, "Você não é um adm!")
         return
+
+def configurar_laras(message):
+    """Exibe o menu de gerenciamento para o produto 'Laras'."""
+    texto = "🍊 <b>Gerenciamento de Laras</b>\n\nSelecione uma das opções abaixo:"
+    markup = InlineKeyboardMarkup()
+    bt_add = InlineKeyboardButton('➕ ADICIONAR LARA', callback_data='adicionar_lara')
+    bt_edit = InlineKeyboardButton('✏️ EDITAR/REMOVER LARA', callback_data='gerenciar_laras')
+    bt_voltar = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
+    markup.add(bt_add)
+    markup.add(bt_edit)
+    markup.add(bt_voltar)
+    
+    # Usamos edit_message_text para manter a navegação fluida
+    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+
+def configurar_ggs(message):
+    """Exibe o menu de gerenciamento para o produto 'GGs'."""
+    texto = "✨ <b>Gerenciamento de GGs (Geradas)</b>\n\nSelecione uma das opções abaixo:"
+    markup = InlineKeyboardMarkup()
+    bt_add = InlineKeyboardButton('➕ ADICIONAR GG', callback_data='adicionar_gg')
+    bt_edit = InlineKeyboardButton('✏️ EDITAR/REMOVER GG', callback_data='gerenciar_ggs_menu')
+    bt_voltar = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
+    markup.add(bt_add)
+    markup.add(bt_edit)
+    markup.add(bt_voltar)
+    
+    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+
+# --- Fluxo de Adição e Gerenciamento de GGs (Admin) ---
+def iniciar_adicionar_gg(message):
+    """Inicia o processo de adicionar GG, pedindo o número."""
+    bot.send_message(message.chat.id, "✨ Qual o <b>número</b> da GG (Gerada)?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_nivel_gg)
+
+def pedir_nivel_gg(message):
+    """Pede o nível da GG."""
+    numero_gg = message.text
+    bot.send_message(message.chat.id, "⭐ Qual o <b>nível</b> da GG? (Ex: Gold, Silver, Bronze)", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_valor_gg, numero_gg)
+
+def pedir_valor_gg(message, numero_gg):
+    """Pede o valor da GG."""
+    nivel_gg = message.text
+    bot.send_message(message.chat.id, "💰 Qual o <b>valor</b> de venda da GG?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_validade_gg, numero_gg, nivel_gg)
+
+def pedir_validade_gg(message, numero_gg, nivel_gg):
+    """Pede a data de validade."""
+    try:
+        valor_gg = float(message.text.replace(',', '.'))
+    except ValueError:
+        bot.reply_to(message, "❌ Valor inválido. Por favor, envie apenas números. O processo foi cancelado.")
+        return
+    
+    bot.send_message(message.chat.id, "📅 Qual a <b>data de validade</b>? (Ex: 02/28)", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_cvv_gg, numero_gg, nivel_gg, valor_gg)
+
+def pedir_cvv_gg(message, numero_gg, nivel_gg, valor_gg):
+    """Pede o nome do titular."""
+    validade_gg = message.text
+    bot.send_message(message.chat.id, "👤 Qual o <b>nome completo</b> do titular?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_cpf_titular_gg, numero_gg, nivel_gg, valor_gg, validade_gg)
+
+def pedir_cpf_titular_gg(message, numero_gg, nivel_gg, valor_gg, validade_gg):
+    """Pede o CPF do titular."""
+    nome_titular = message.text
+    bot.send_message(message.chat.id, "📄 Qual o <b>CPF</b> do titular?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_cvv_final_gg, numero_gg, nivel_gg, valor_gg, validade_gg, nome_titular)
+
+def pedir_cvv_final_gg(message, numero_gg, nivel_gg, valor_gg, validade_gg, nome_titular):
+    """Pede o CVV e chama a função final."""
+    cpf_titular = message.text
+    bot.send_message(message.chat.id, "🔒 Qual o <b>CVV/código de segurança</b>?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, finalizar_adicao_gg, numero_gg, nivel_gg, valor_gg, validade_gg, nome_titular, cpf_titular)
+
+def finalizar_adicao_gg(message, numero_gg, nivel_gg, valor_gg, validade_gg, nome_titular, cpf_titular):
+    """Adiciona a GG ao banco de dados e informa o admin."""
+    cvv_gg = message.text
+    try:
+        # A estrutura é a mesma da CC: nome=número, email=número, senha=validade, duracao=cvv
+        api.Admin.ControleGGs.add_gg(nome=numero_gg, valor=valor_gg, descricao=nivel_gg, email=numero_gg, senha=validade_gg, duracao=cvv_gg, titular=nome_titular, cpf=cpf_titular)
+        bot.reply_to(message, f"✅ <b>GG adicionada com sucesso!</b>\n\n<b>Número:</b> <code>{numero_gg}</code>\n<b>Nível:</b> {nivel_gg}\n<b>Valor:</b> R$ {valor_gg:.2f}", parse_mode='HTML')
+    except Exception as e:
+        bot.reply_to(message, f"❌ Ocorreu um erro ao adicionar a GG: {e}")
+
+def gerenciar_ggs_menu(call):
+    """Exibe os níveis de GGs disponíveis para gerenciamento."""
+    niveis = api.Admin.ControleGGs.pegar_niveis_unicos()
+    markup = InlineKeyboardMarkup()
+
+    if not niveis:
+        bot.answer_callback_query(call.id, "Nenhum nível de GG encontrado no estoque.", show_alert=True)
+        return
+
+    for nivel in niveis:
+        markup.add(InlineKeyboardButton(f"Nível: {nivel.upper()}", callback_data=f"listar_ggs_do_nivel {nivel}"))
+    
+    markup.add(InlineKeyboardButton("↩️ Voltar", callback_data="configurar_ggs"))
+    texto = "🗂️ Selecione um <b>nível</b> para ver ou remover as GGs:"
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
+
+def listar_ggs_do_nivel(call, nivel):
+    """Lista todas as GGs de um nível específico com opções de gerenciamento."""
+    ggs_do_nivel = api.Admin.ControleGGs.pegar_ggs_por_nivel(nivel)
+    markup = InlineKeyboardMarkup()
+    
+    texto = f"✨ <b>GGs do Nível: {nivel.upper()}</b>\n\n"
+
+    if not ggs_do_nivel:
+        texto += "Não há GGs neste nível."
+    else:
+        for gg in ggs_do_nivel:
+            numero = gg.get("nome")
+            email_id = gg.get("email") # Identificador único
+            texto_gg = f"<code>{numero[:6]}...{numero[-4:]}</code> - R${gg.get('valor'):.2f}"
+            markup.add(InlineKeyboardButton(texto_gg, callback_data="noop"), InlineKeyboardButton("✏️", callback_data=f"editar_gg_menu {numero}|{email_id}"), InlineKeyboardButton("❌", callback_data=f"remover_gg_especifico {numero}|{email_id}"))
+
+    markup.add(InlineKeyboardButton(f"🗑️ Remover TODAS de {nivel.upper()}", callback_data=f"confirmar_remover_nivel_gg {nivel}"))
+    markup.add(InlineKeyboardButton("↩️ Voltar aos Níveis", callback_data="gerenciar_ggs_menu"))
+
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
+
+def confirmar_remover_nivel_gg(call, nivel):
+    """Pede confirmação para remover todas as GGs de um nível."""
+    texto = f"⚠️ <b>ATENÇÃO</b> ⚠️\n\nVocê tem certeza que deseja remover <b>TODAS</b> as GGs do nível <b>{nivel.upper()}</b>?\n\nEsta ação não pode ser desfeita."
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton(f"✅ Sim, remover todas", callback_data=f"remover_nivel_gg_confirmado {nivel}")],
+        [InlineKeyboardButton("❌ Não, cancelar", callback_data=f"listar_ggs_do_nivel {nivel}")]
+    ])
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
+
+def remover_nivel_gg_confirmado(call, nivel):
+    """Remove todas as GGs de um nível e atualiza a visualização."""
+    if api.Admin.ControleGGs.remover_por_nivel(nivel):
+        bot.answer_callback_query(call.id, f"Todas as GGs do nível '{nivel.upper()}' foram removidas.", show_alert=True)
+    else:
+        bot.answer_callback_query(call.id, "Erro ao remover as GGs ou nenhuma GG encontrada.", show_alert=True)
+    gerenciar_ggs_menu(call)
+
+def editar_gg_menu(call, gg_identifier):
+    """Exibe o menu de edição para uma GG específica."""
+    try:
+        numero, email = gg_identifier.split('|')
+    except ValueError:
+        bot.answer_callback_query(call.id, "Erro: Identificador de GG inválido.", show_alert=True)
+        return
+
+    gg_data = api.ControleGGs.entregar_gg(numero, email)
+    if not gg_data:
+        bot.answer_callback_query(call.id, "Erro: GG não encontrada.", show_alert=True)
+        return
+
+    texto = (
+        f"✏️ <b>Editando GG</b>\n\n"
+        f"<b>Número:</b> <code>{gg_data.get('nome')}</code>\n"
+        f"<b>Nível:</b> {gg_data.get('descricao')}\n"
+        f"<b>Valor:</b> R$ {gg_data.get('valor'):.2f}\n"
+        f"<b>Titular:</b> {gg_data.get('titular')}\n"
+        f"<b>CPF:</b> {gg_data.get('cpf')}\n\n"
+        "Selecione o campo que deseja editar:"
+    )
+
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton("💰 Editar Valor", callback_data=f"editar_campo_gg valor|{numero}"))
+    markup.add(InlineKeyboardButton("⭐ Editar Nível", callback_data=f"editar_campo_gg nivel|{numero}"))
+    markup.add(InlineKeyboardButton("👤 Editar Titular", callback_data=f"editar_campo_gg titular|{numero}"))
+    markup.add(InlineKeyboardButton("📄 Editar CPF", callback_data=f"editar_campo_gg cpf|{numero}"))
+    markup.add(InlineKeyboardButton("↩️ Voltar", callback_data=f"listar_ggs_do_nivel {gg_data.get('descricao')}"))
+
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
+
+def solicitar_novo_valor_campo_gg(call, campo, numero_gg):
+    """Pede ao admin o novo valor para um campo específico da GG."""
+    mapa_campos = {
+        'valor': 'o novo valor', 'nivel': 'o novo nível',
+        'titular': 'o novo nome do titular', 'cpf': 'o novo CPF'
+    }
+    prompt = f"Digite {mapa_campos.get(campo, 'o novo valor')} para a GG <code>{numero_gg}</code>:"
+    bot.send_message(call.message.chat.id, prompt, parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(call.message, salvar_campo_gg_editado, campo, numero_gg)
+
+def salvar_campo_gg_editado(message, campo, numero_gg):
+    """Salva o valor editado do campo da GG no banco de dados."""
+    novo_valor = message.text.strip()
+    sucesso = False
+    
+    try:
+        if campo == 'valor':
+            sucesso = api.Admin.ControleGGs.mudar_valor_gg(numero_gg, novo_valor)
+        elif campo == 'nivel':
+            sucesso = api.Admin.ControleGGs.mudar_nivel_gg(numero_gg, novo_valor)
+        elif campo == 'titular':
+            sucesso = api.Admin.ControleGGs.mudar_titular_gg(numero_gg, novo_valor)
+        elif campo == 'cpf':
+            sucesso = api.Admin.ControleGGs.mudar_cpf_gg(numero_gg, novo_valor)
+
+        if sucesso:
+            bot.reply_to(message, f"✅ O campo '{campo}' da GG foi atualizado com sucesso!")
+        else:
+            bot.reply_to(message, "❌ Erro: Não foi possível atualizar a GG.")
+
+    except Exception as e:
+        bot.reply_to(message, f"❌ Erro ao processar a alteração: {e}")
+
+# --- Fluxo de Adição de Laras ---
+def iniciar_adicionar_lara(message):
+    """Inicia o processo de adicionar Lara, pedindo o e-mail."""
+    bot.send_message(message.chat.id, "📧 Qual o <b>e-mail</b> da conta?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_senha_email_lara)
+
+def pedir_senha_email_lara(message):
+    """Pede a senha do e-mail."""
+    email = message.text
+    bot.send_message(message.chat.id, "🔑 Qual a <b>senha do e-mail</b>?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_senha_lara, email)
+
+def pedir_senha_lara(message, email):
+    """Pede a senha da 'Lara'."""
+    senha_email = message.text
+    bot.send_message(message.chat.id, "🍊 Qual a <b>senha da Lara</b>?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_sexo_lara, email, senha_email)
+
+def pedir_sexo_lara(message, email, senha_email):
+    """Pede o sexo."""
+    senha_lara = message.text
+    bot.send_message(message.chat.id, "♀️♂️ Qual o <b>sexo</b>? (Feminino/Masculino)", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_nome_lara, email, senha_email, senha_lara)
+
+def pedir_nome_lara(message, email, senha_email, senha_lara):
+    """Pede o nome completo."""
+    sexo = message.text
+    bot.send_message(message.chat.id, "👤 Qual o <b>nome completo</b>?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_cpf_lara, email, senha_email, senha_lara, sexo)
+
+def pedir_cpf_lara(message, email, senha_email, senha_lara, sexo):
+    """Pede o CPF."""
+    nome = message.text
+    bot.send_message(message.chat.id, "📄 Qual o <b>CPF</b>?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_banco_lara, email, senha_email, senha_lara, sexo, nome)
+
+def pedir_banco_lara(message, email, senha_email, senha_lara, sexo, nome):
+    """Pede o banco da Lara."""
+    cpf = message.text
+    bot.send_message(message.chat.id, "🏦 Qual o <b>banco</b> da Lara?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_valor_lara, email, senha_email, senha_lara, sexo, nome, cpf)
+
+def pedir_valor_lara(message, email, senha_email, senha_lara, sexo, nome, cpf):
+    """Pede o valor de venda."""
+    banco = message.text
+    bot.send_message(message.chat.id, "💰 Qual o <b>valor de venda</b> do produto?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, finalizar_adicao_lara, email, senha_email, senha_lara, sexo, nome, cpf, banco)
+
+def finalizar_adicao_lara(message, email, senha_email, senha_lara, sexo, nome, cpf, banco):
+    """Finaliza a adição da Lara, salvando no banco de dados."""
+    try:
+        valor = float(message.text.replace(',', '.'))
+        api.ControleLaras.add_lara(email, senha_email, senha_lara, sexo, nome, cpf, valor, banco)
+        bot.reply_to(message, f"✅ <b>Produto 'Lara' adicionado com sucesso!</b>\n\n<b>E-mail:</b> <code>{email}</code>\n<b>Nome:</b> {nome}\n<b>Banco:</b> {banco}\n<b>Valor:</b> R$ {valor:.2f}", parse_mode='HTML')
+    except ValueError:
+        bot.reply_to(message, "❌ Valor inválido. Por favor, envie apenas números. O processo foi cancelado.")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Ocorreu um erro ao adicionar o produto: {e}")
+
+# --- Fluxo de Gerenciamento de Laras ---
+def gerenciar_laras_menu(call):
+    """Exibe a lista de Laras disponíveis para gerenciamento."""
+    laras = api.ControleLaras.pegar_todas_laras()
+    markup = InlineKeyboardMarkup()
+    
+    texto = "🍊 <b>Gerenciar Laras</b>\n\nSelecione uma para editar ou remover:\n\n"
+
+    if not laras:
+        texto += "Não há 'Laras' no estoque."
+    else:
+        for lara in laras:
+            email = lara.get("email")
+            valor = lara.get("valor", 0)
+            texto_lara = f"<code>{email}</code> - R${valor:.2f}"
+            # Adiciona botões de Editar e Remover para cada Lara
+            markup.add(
+                InlineKeyboardButton(texto_lara, callback_data="noop"),
+                InlineKeyboardButton("✏️", callback_data=f"editar_lara_menu {email}"),
+                InlineKeyboardButton("❌", callback_data=f"remover_lara_confirma {email}")
+            )
+
+    markup.add(InlineKeyboardButton('↩ VOLTAR', callback_data='configurar_laras'))
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+
+def remover_lara_confirma(call, email):
+    """Pede confirmação para remover uma Lara."""
+    texto = f"⚠️ <b>ATENÇÃO</b> ⚠️\n\nVocê tem certeza que deseja remover a Lara com o e-mail:\n<code>{email}</code>?\n\nEsta ação não pode ser desfeita."
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("✅ Sim, remover", callback_data=f"remover_lara_executa {email}")],
+        [InlineKeyboardButton("❌ Não, cancelar", callback_data="gerenciar_laras")]
+    ])
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+
+def remover_lara_executa(call, email):
+    """Executa a remoção da Lara."""
+    if api.ControleLaras.remover_lara(email):
+        bot.answer_callback_query(call.id, "Lara removida com sucesso!", show_alert=True)
+    else:
+        bot.answer_callback_query(call.id, "Erro: Lara não encontrada.", show_alert=True)
+    # Volta para o menu de gerenciamento
+    gerenciar_laras_menu(call)
+
+def editar_lara_menu(call, email):
+    """Exibe o menu de edição para uma Lara específica."""
+    lara = api.ControleLaras.pegar_lara_por_email(email)
+    if not lara:
+        bot.answer_callback_query(call.id, "Erro: Lara não encontrada.", show_alert=True)
+        return
+
+    texto = f"✏️ <b>Editando Lara:</b> <code>{lara.get('email')}</code>\n\nSelecione o campo que deseja editar:"
+    markup = InlineKeyboardMarkup()
+    campos = ["email", "senha_email", "senha_lara", "sexo", "nome", "cpf", "banco", "valor"]
+    
+    for campo in campos:
+        markup.add(InlineKeyboardButton(f"Editar {campo.replace('_', ' ').title()}", callback_data=f"editar_campo_lara {email}|{campo}"))
+
+    markup.add(InlineKeyboardButton("↩️ Voltar", callback_data="gerenciar_laras"))
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+
+def solicitar_novo_valor_lara(call, email, campo):
+    """Pede ao admin o novo valor para um campo da Lara."""
+    prompt = f"Digite o novo valor para <b>{campo.replace('_', ' ')}</b> da Lara <code>{email}</code>:"
+    bot.send_message(call.message.chat.id, prompt, parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(call.message, salvar_campo_lara_editado, email, campo)
+
+def salvar_campo_lara_editado(message, email, campo):
+    """Salva o valor editado do campo da Lara."""
+    novo_valor = message.text.strip()
+    
+    # Converte para float se o campo for 'valor'
+    if campo == 'valor':
+        try:
+            novo_valor = float(novo_valor.replace(',', '.'))
+        except ValueError:
+            bot.reply_to(message, "❌ Valor inválido. Por favor, envie apenas números para o campo 'valor'.")
+            return
+
+    if api.ControleLaras.editar_campo_lara(email, campo, novo_valor):
+        bot.reply_to(message, f"✅ O campo '{campo}' foi atualizado com sucesso!")
+        # Idealmente, aqui voltaríamos para o menu de edição, mas como perdemos o 'call',
+        # o admin pode voltar manualmente pelo painel.
+    else:
+        bot.reply_to(message, "❌ Erro: Não foi possível atualizar a Lara.")
+
+# --- Fluxo de Compra de Laras (Cliente) ---
+def servicos_laras_menu(message):
+    """Exibe a lista de Laras disponíveis para compra."""
+    laras = api.ControleLaras.pegar_todas_laras()
+    markup = InlineKeyboardMarkup()
+    
+    texto = "🍊 <b>Laras Disponíveis</b>\n\nSelecione uma das opções abaixo para ver os detalhes e comprar:\n\n"
+
+    if not laras:
+        texto += "Não há 'Laras' disponíveis no momento."
+        markup.add(InlineKeyboardButton('↩ VOLTAR', callback_data='menu_servicos'))
+    else:
+        for lara in laras:
+            email = lara.get("email")
+            banco = lara.get("banco", "N/A")
+            valor = float(lara.get("valor", 0))
+            markup.add(InlineKeyboardButton(f"🏦 {banco.title()} - R$ {valor:.2f}", callback_data=f"exibir_lara {email}"))
+        markup.add(InlineKeyboardButton('↩ VOLTAR', callback_data='menu_servicos'))
+
+    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+
+def exibir_lara_compra(call, email):
+    """Exibe os detalhes de uma Lara para confirmação de compra."""
+    lara = api.ControleLaras.pegar_lara_por_email(email)
+    if not lara:
+        bot.answer_callback_query(call.id, "Esta Lara não está mais disponível.", show_alert=True)
+        servicos_laras_menu(call.message)
+        return
+
+    saldo_usuario = api.InfoUser.saldo(call.from_user.id)
+    valor = float(lara.get("valor", 0))
+
+    # Mascarar dados para exibição
+    nome_mascarado = lara.get('nome', 'N/A').split(' ')[0]
+    cpf_mascarado = f"***.{lara.get('cpf', '***********')[3:6]}.***-**"
+
+    texto = (
+        f"<b>⚠️ CONFIRME SUA COMPRA ⚠️</b>\n\n"
+        f"<i>Você está prestes a adquirir a seguinte Lara:</i>\n\n"
+        f"🏦 <b>Banco:</b> {lara.get('banco', 'N/A').title()}\n"
+        f"👤 <b>Nome:</b> <code>{nome_mascarado}</code>\n"
+        f"📄 <b>CPF:</b> <code>{cpf_mascarado}</code>\n"
+        f"♀️♂️ <b>Sexo:</b> {lara.get('sexo', 'N/A').title()}\n"
+        f"- - - - - - - - - - - - - - - - - - -\n\n"
+        f"💰 <b>Valor do Produto:</b> R$ {valor:.2f}\n"
+        f"💸 <b>Seu Saldo Atual:</b> R$ {saldo_usuario:.2f}\n\n"
+        f"<i>Clique em 'Confirmar Compra' para finalizar.</i>"
+    )
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton('✅ Confirmar Compra', callback_data=f"comprar_lara {email}")],
+        [InlineKeyboardButton('↩️ Voltar', callback_data='servicos_laras')]
+    ])
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+
+def entregar_lara(call, email):
+    """Processa a compra e entrega da Lara."""
+    lara = api.ControleLaras.pegar_lara_por_email(email)
+    if not lara:
+        bot.answer_callback_query(call.id, "Esta Lara não está mais disponível.", show_alert=True)
+        return
+
+    valor = float(lara.get("valor", 0))
+    if api.InfoUser.saldo(call.from_user.id) < valor:
+        bot.answer_callback_query(call.id, "Saldo insuficiente!", show_alert=True)
+        return
+
+    api.InfoUser.tirar_saldo(call.from_user.id, valor)
+    api.ControleLaras.remover_lara(email)
+    api.MudancaHistorico.add_compra_lara(call.from_user.id, lara)
+
+    texto_entrega = f"🥳 <b>COMPRA REALIZADA COM SUCESSO</b> 🥳\n\n<b>Detalhes da sua Lara:</b>\n\n📧 <b>E-mail:</b> <code>{lara.get('email')}</code>\n🔑 <b>Senha E-mail:</b> <code>{lara.get('senha_email')}</code>\n🍊 <b>Senha Lara:</b> <code>{lara.get('senha_lara')}</code>\n🏦 <b>Banco:</b> {lara.get('banco')}\n👤 <b>Nome:</b> {lara.get('nome')}\n📄 <b>CPF:</b> <code>{lara.get('cpf')}</code>\n♀️♂️ <b>Sexo:</b> {lara.get('sexo')}\n\n<b>OBRIGADO PELA PREFERÊNCIA!</b>"
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto_entrega, parse_mode='HTML')
+
+# --- Fluxo de Compra de GGs (Cliente) ---
+def servicos_ggs_menu(message):
+    """Exibe a lista de NÍVEIS de GGs disponíveis para compra."""
+    niveis = api.Admin.ControleGGs.pegar_niveis_unicos()
+    markup = InlineKeyboardMarkup()
+
+    if not niveis:
+        markup.add(InlineKeyboardButton('❌ NÃO HÁ GGs DISPONÍVEIS ❌', callback_data='menu_servicos'))
+    else:
+        for nivel in niveis:
+            markup.add(InlineKeyboardButton(f"⭐ Nível {nivel.upper()}", callback_data=f"ver_gg_do_nivel {nivel}|0"))
+    
+    markup.add(InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='menu_servicos'))
+    texto = api.Textos.menu_comprar_gg()
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
+
+def ver_gg_do_nivel(call, nivel, index):
+    """Exibe uma GG de um nível específico com base no índice."""
+    ggs_do_nivel = api.Admin.ControleGGs.pegar_ggs_por_nivel(nivel)
+
+    if not ggs_do_nivel:
+        bot.answer_callback_query(call.id, "Não há mais GGs neste nível.", show_alert=True)
+        servicos_ggs_menu(call.message)
+        return
+
+    index = int(index) % len(ggs_do_nivel)
+    gg_atual = ggs_do_nivel[index]
+
+    numero_gg = gg_atual.get("nome")
+    valor = float(gg_atual.get("valor", 0))
+    
+    saldo_usuario = api.InfoUser.saldo(call.from_user.id)
+
+    # Usa a mesma função de texto da CC, pois a estrutura é idêntica
+    texto = api.Textos.confirmacao_compra_cc(
+        saldo_usuario=f"{saldo_usuario:.2f}", valor_cc=f"{valor:.2f}", nivel=nivel,
+        numero=numero_gg, validade=gg_atual.get("senha"), cvv=gg_atual.get("duracao"),
+        nome_titular=gg_atual.get("titular", "N/A"), cpf=gg_atual.get("cpf", "N/A")
+    )
+
+    total_ggs = len(ggs_do_nivel)
+    proximo_index = (index + 1) % total_ggs
+    anterior_index = (index - 1 + total_ggs) % total_ggs
+
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton('✅ Confirmar Compra', callback_data=f'comprar_gg {numero_gg}|{numero_gg}')],
+        [InlineKeyboardButton('◀️ Anterior', callback_data=f'ver_gg_do_nivel {nivel}|{anterior_index}'),
+         InlineKeyboardButton('▶️ Próxima', callback_data=f'ver_gg_do_nivel {nivel}|{proximo_index}')],
+        [InlineKeyboardButton('↩️ Voltar aos Níveis', callback_data='servicos_ggs')]
+    ])
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
+
+def entregar_gg(call, nome_gg, numero_gg):
+    """Processa a compra e entrega da GG."""
+    gg_data = api.ControleGGs.entregar_gg(nome_gg, numero_gg)
+    # O resto da lógica é idêntica à de entregar_cc, então podemos reutilizar
+    entregar_produto_generico(call, gg_data, api.ControleGGs.remover_gg, api.MudancaHistorico.add_compra_gg)
+
 #Menu Geral
 def configuracoes_geral(message):
     texto = f'<i>Use os botões abaixo para configurar seu bot:</i>\n📬 DESTINO DAS LOG\'S: {api.CredentialsChange.id_dono()}\n👤 <b>LINK DO SUPORTE ATUAL: {api.CredentialsChange.SuporteInfo.link_suporte()}</b>\n✂️ SEPARADOR: {api.CredentialsChange.separador()}\n<i>separador é o caractér que separa as informações quando você vai alterar algo no bot. Ele é muito importante, então escolha um caractér que você não usa com frequencia para que o bot não fique confuso na hora de separar</i>\n<b>EX DO SEPARADOR EM AÇÃO:</b> NOME{api.CredentialsChange.separador()}VALOR'
@@ -110,7 +619,11 @@ def configuracoes_geral(message):
     bt3 = InlineKeyboardButton('✂️ MUDAR SEPARADOR', callback_data='mudar_separador')
     bt4 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
     markup = InlineKeyboardMarkup([[bt], [bt2], [bt3], [bt4]])
-    bot.edit_message_text(chat_id=message.chat.id, text=texto, message_id=message.message_id, reply_markup=markup, parse_mode='HTML', disable_web_page_preview=True)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, text=texto, message_id=message.message_id, reply_markup=markup, parse_mode='HTML', disable_web_page_preview=True)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 def trocar_suporte(message, idcall):
     suporte = message.text
     api.CredentialsChange.SuporteInfo.mudar_link_suporte(str(suporte))
@@ -191,7 +704,11 @@ def configurar_logins(message):
     bt6 = InlineKeyboardButton('🎫 MUDAR VALOR DE TODOS', callback_data='mudar_valor_todos')
     bt7 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
     markup = InlineKeyboardMarkup([[bt], [bt2], [bt3], [bt4], [bt5], [bt6], [bt7]])
-    bot.edit_message_text(chat_id=message.chat.id, text=texto, message_id=message.message_id, reply_markup=markup, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, text=texto, message_id=message.message_id, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 #Menu CCs
 def remover_cc(message):
@@ -232,7 +749,11 @@ def configurar_ccs(call):
     bt2 = InlineKeyboardButton("✏️ EDITAR / REMOVER CC", callback_data='gerenciar_ccs_por_nivel')
     bt3 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
     markup = InlineKeyboardMarkup([[bt], [bt2], [bt3]])
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def gerenciar_ccs_por_nivel(call):
     """Exibe os níveis de CCs disponíveis para gerenciamento."""
@@ -248,7 +769,11 @@ def gerenciar_ccs_por_nivel(call):
     
     markup.add(InlineKeyboardButton("↩️ Voltar", callback_data="configurar_ccs"))
     texto = "🗂️ Selecione um <b>nível</b> para ver ou remover os cartões:"
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def listar_ccs_do_nivel(call, nivel):
     """Lista todos os CCs de um nível específico com opções de remoção."""
@@ -270,7 +795,11 @@ def listar_ccs_do_nivel(call, nivel):
     markup.add(InlineKeyboardButton(f"🗑️ Remover TODOS de {nivel.upper()}", callback_data=f"confirmar_remover_nivel {nivel}"))
     markup.add(InlineKeyboardButton("↩️ Voltar aos Níveis", callback_data="gerenciar_ccs_por_nivel"))
 
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def confirmar_remover_nivel(call, nivel):
     """Pede confirmação para remover todos os CCs de um nível."""
@@ -279,7 +808,11 @@ def confirmar_remover_nivel(call, nivel):
         [InlineKeyboardButton(f"✅ Sim, remover todos", callback_data=f"remover_nivel_confirmado {nivel}")],
         [InlineKeyboardButton("❌ Não, cancelar", callback_data=f"listar_ccs_do_nivel {nivel}")]
     ])
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def remover_nivel_confirmado(call, nivel):
     """Remove todos os CCs de um nível e atualiza a visualização."""
@@ -321,7 +854,11 @@ def editar_cc_menu(call, cc_identifier):
     markup.add(InlineKeyboardButton("📄 Editar CPF", callback_data=f"editar_campo_cc cpf|{numero}"))
     markup.add(InlineKeyboardButton("↩️ Voltar", callback_data=f"listar_ccs_do_nivel {cc_data.get('descricao')}"))
 
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def solicitar_novo_valor_campo(call, campo, numero_cc):
     """Pede ao admin o novo valor para um campo específico."""
@@ -454,7 +991,11 @@ def configurar_afiliados(message):
     bt4 = InlineKeyboardButton('✖️ MULTIPLICADOR PARA CONVERTER', callback_data='multiplicador_para_converter')
     bt5 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
     markup = InlineKeyboardMarkup([[bt], [bt2], [bt3], [bt4], [bt5]])
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 def pontos_por_recarga(message):
     try:
         pontos = message.text
@@ -485,7 +1026,11 @@ def configurar_usuarios(message):
     bt4 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
     markup = InlineKeyboardMarkup([[bt], [bt2], [bt3], [bt4]])
     try:
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+        try:
+            bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+        except telebot.apihelper.ApiTelegramException as e:
+            if 'message is not modified' not in e.description:
+                raise
     except telebot.apihelper.ApiTelegramException as e:
         if 'message is not modified' not in e.description:
             raise
@@ -635,21 +1180,33 @@ def mudar_saldo(message, id):
         bot.reply_to(message, "Falha ao alterar, verifique se enviou um valor valido.")
 #Menu Pix
 def configurar_pix(message):
-    texto = f'🔑 <b>TOKEN MERCADO PAGO:</b> <code>{api.CredentialsChange.InfoPix.token_mp()}</code>\n🔻 <b>DEPÓSITO MÍNIMO:</b> <code>R${api.CredentialsChange.InfoPix.deposito_minimo_pix():.2f}</code>\n❗️ <b>DEPÓSITO MÁXIMO:</b> <code>R${api.CredentialsChange.InfoPix.deposito_maximo_pix():.2f}</code>\n🔶 <b>BÔNUS DE DEPÓSITO:</b> <code>{api.CredentialsChange.BonusPix.quantidade_bonus()}%</code>\n🔷 <b>DEPÓSITO MÍNIMO PARA GANHAR O BÔNUS:</b> R${api.CredentialsChange.BonusPix.valor_minimo_para_bonus():.2f}'
+    texto = (
+        f'🔑 <b>TOKEN MERCADO PAGO:</b> <code>{api.CredentialsChange.InfoPix.token_mp()}</code>\n'
+        f'🔑 <b>CHAVE PIX MANUAL:</b> <code>{api.CredentialsChange.InfoPix.chave_pix_manual()}</code>\n'
+        f'🔻 <b>DEPÓSITO MÍNIMO:</b> <code>R${api.CredentialsChange.InfoPix.deposito_minimo_pix():.2f}</code>\n'
+        f'❗️ <b>DEPÓSITO MÁXIMO:</b> <code>R${api.CredentialsChange.InfoPix.deposito_maximo_pix():.2f}</code>\n'
+        f'🔶 <b>BÔNUS DE DEPÓSITO:</b> <code>{api.CredentialsChange.BonusPix.quantidade_bonus()}%</code>\n'
+        f'🔷 <b>DEPÓSITO MÍNIMO PARA GANHAR O BÔNUS:</b> R${api.CredentialsChange.BonusPix.valor_minimo_para_bonus():.2f}'
+    )
     bt = InlineKeyboardButton('🔴 PIX MANUAL', callback_data='trocar_pix_manual')
     bt2 = InlineKeyboardButton('🔴 PIX AUTOMATICO', callback_data='trocar_pix_automatico')
     if api.CredentialsChange.StatusPix.pix_manual() == True:
         bt = InlineKeyboardButton('🟢 PIX MANUAL', callback_data='trocar_pix_manual')
     if api.CredentialsChange.StatusPix.pix_auto() == True:
         bt2 = InlineKeyboardButton('🟢 PIX AUTOMATICO', callback_data='trocar_pix_automatico')
-    bt3 = InlineKeyboardButton('🔑 MUDAR TOKEN', callback_data='mudar_token')
+    bt3 = InlineKeyboardButton('🔑 MUDAR TOKEN MP', callback_data='mudar_token')
+    bt_chave_manual = InlineKeyboardButton('🔑 MUDAR CHAVE PIX MANUAL', callback_data='mudar_chave_pix_manual')
     bt4 = InlineKeyboardButton('🔻 MUDAR DEPOSITO MIN', callback_data='mudar_deposito_minimo')
     bt5 = InlineKeyboardButton('❗️ MUDAR DEPOSITO MAX', callback_data='mudar_deposito_maximo')
     bt6 = InlineKeyboardButton('🔶 MUDAR BONUS', callback_data='mudar_bonus')
     bt7 = InlineKeyboardButton('🔷 MUDAR MIN PARA BONUS', callback_data='mudar_min_bonus')
     bt8 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
-    markup = InlineKeyboardMarkup([[bt, bt2], [bt3], [bt4], [bt5], [bt6], [bt7], [bt8]])
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    markup = InlineKeyboardMarkup([[bt, bt2], [bt3], [bt_chave_manual], [bt4], [bt5], [bt6], [bt7], [bt8]])
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 def mudar_token(message):
     try:
         token = message.text
@@ -658,6 +1215,13 @@ def mudar_token(message):
     except Exception as e:
         print(e)
         bot.reply_to(message, "Falha ao alterar")
+def mudar_chave_pix_manual(message):
+    try:
+        chave = message.text
+        api.CredentialsChange.InfoPix.mudar_chave_pix_manual(chave)
+        bot.reply_to(message, "Chave PIX manual alterada com sucesso!")
+    except Exception as e:
+        bot.reply_to(message, f"Falha ao alterar a chave: {e}")
 def mudar_deposito_minimo(message):
     try:
         min = message.text
@@ -721,7 +1285,11 @@ def configurar_notificacoes(message):
     bt11 = InlineKeyboardButton('🔖 TROCAR SERVICOS', callback_data='trocar_servicos')
     bt12 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
     markup = InlineKeyboardMarkup([[bt], [bt2], [bt3], [bt4], [bt5], [bt6], [bt7], [bt8],[bt9], [bt10], [bt11], [bt12]])
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 def tempo_min_saldo(message):
     min = message.text
     api.Notificacoes.trocar_tempo_minimo_saldo(min)
@@ -800,7 +1368,11 @@ def gift_card(message):
     bt2 = InlineKeyboardButton('🎁 GERAR VARIOS GIFT 🎁', switch_inline_query_current_chat='CREATEGIFT 1 10')
     bt4 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
     markup = InlineKeyboardMarkup([[bt], [bt2], [bt4]])
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text='<i>Selecione a opção desejada:</i>', parse_mode='HTML', reply_markup=markup)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text='<i>Selecione a opção desejada:</i>', parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 @bot.inline_handler(lambda query: query.query.startswith('CREATEGIFT '))
 def create_gift_card(inline_query):
     print(inline_query)
@@ -999,7 +1571,7 @@ def handle_start(message, edit_message=False):
             return
 
     # Acessa o nome do usuário de forma segura
-    first_name = message.from_user.first_name if message.from_user.first_name else "Usuário"
+    first_name = html.escape(message.from_user.first_name) if message.from_user.first_name else "Usuário"
     username = f"@{message.from_user.username}" if message.from_user.username else "N/A"
     
     # Usa a função centralizada de textos para a mensagem de start, passando os argumentos corretos
@@ -1024,9 +1596,17 @@ def handle_start(message, edit_message=False):
     markup.row(bt4)
 
     if edit_message:
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+        try:
+            bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+        except telebot.apihelper.ApiTelegramException as e:
+            if 'message is not modified' not in e.description:
+                raise
     else:
-        bot.send_message(chat_id=message.chat.id, text=texto, parse_mode='HTML', reply_markup=markup)
+        try:
+            bot.send_message(chat_id=message.chat.id, text=texto, parse_mode='HTML', reply_markup=markup)
+        except telebot.apihelper.ApiTelegramException as e:
+            if 'message is not modified' not in e.description:
+                raise
 
 
 
@@ -1051,12 +1631,14 @@ def menu_servicos(message):
     # Botões para as categorias de serviços
     bt_logins = InlineKeyboardButton(f'{api.Botoes.comprar()}', callback_data='servicos')
     bt_ccs = InlineKeyboardButton(f'{api.Botoes.ccs()}', callback_data='servicos_ccs')
-    bt_tc = InlineKeyboardButton(f'{api.Botoes.tc()}', callback_data='listar_tcs') # Futuramente, isso listará os TCs para compra
+    # O botão TC foi removido e substituído por Laras a pedido.
+    bt_laras = InlineKeyboardButton(f'{api.Botoes.laras()}', callback_data='servicos_laras')
+    bt_ggs = InlineKeyboardButton(f'{api.Botoes.ggs()}', callback_data='servicos_ggs')
     
     # Botão para voltar ao menu principal
     bt_voltar = InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='menu_start')
     
-    markup = InlineKeyboardMarkup([[bt_logins, bt_ccs], [bt_tc], [bt_voltar]])
+    markup = InlineKeyboardMarkup([[bt_logins, bt_ccs], [bt_laras, bt_ggs], [bt_voltar]])
     try:
         bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
     except telebot.apihelper.ApiTelegramException as e:
@@ -1077,7 +1659,11 @@ def servicos_ccs(message):
     
     markup.add(InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='menu_servicos'))
     texto = api.Textos.menu_comprar_cc()
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def ver_cartao_do_nivel(call, nivel, index):
     """Exibe um cartão de um nível específico com base no índice."""
@@ -1134,7 +1720,11 @@ def show_developer_info(message):
     """Exibe a mensagem com informações do desenvolvedor."""
     texto = api.Textos.desenvolvedor_info()
     markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='menu_start')]])
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup, disable_web_page_preview=True)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup, disable_web_page_preview=True)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def descricoes_logins(message):
     servicos = api.ControleLogins.pegar_servicos()
@@ -1158,7 +1748,11 @@ def descricoes_logins(message):
                      texto_final += f"<b>{nome}:</b>\n<code>{html.escape(descricao)}</code>\n\n"
     
     markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='menu_start')]])
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto_final, parse_mode='HTML', reply_markup=markup, disable_web_page_preview=True)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto_final, parse_mode='HTML', reply_markup=markup, disable_web_page_preview=True)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def perfil(message):
     markup = InlineKeyboardMarkup()
@@ -1170,7 +1764,11 @@ def perfil(message):
     bt3 = InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='menu_start')
     markup.add(bt3)
     texto = api.Textos.perfil(message)
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 def servicos(message):
     servicos = api.ControleLogins.pegar_servicos()
     markup = InlineKeyboardMarkup()
@@ -1198,7 +1796,11 @@ def servicos(message):
     bt3 = InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='menu_start')
     markup.add(bt3)
     texto = api.Textos.menu_comprar()
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 def exibir_servico(message, servico):
     # Pega as informações do primeiro item disponível para obter o email/identificador único
     info_servico = api.ControleLogins.pegar_info(servico)
@@ -1215,12 +1817,20 @@ def exibir_servico(message, servico):
     bt = InlineKeyboardButton(f'{api.Botoes.comprar_login()}', callback_data=f'comprar {servico}|{email}')
     bt2 = InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='servicos')
     markup = InlineKeyboardMarkup([[bt], [bt2]])
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 def entregar(message, nome, valor, email, senha, descricao, duracao):
     texto = api.Textos.mensagem_comprou()
     api.ControleLogins.remover_login(nome, email)
     api.MudancaHistorico.add_compra(message.chat.id, nome, valor, email, senha)
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
     try:
         texto_adm = api.Log.log_compra(message, nome, email, senha, valor, descricao)
         bot.send_message(chat_id=api.CredentialsChange.id_dono(), text=texto_adm, parse_mode='HTML')
@@ -1245,7 +1855,11 @@ def entregar_cc(message, nome_cc, numero_cc):
     
     # Formata a mensagem de entrega para o usuário
     texto_entrega = f"🥳 <b>COMPRA REALIZADA COM SUCESSO</b> 🥳\n\n⚜️ <b>{cc_data['descricao'].upper()}</b> ⚜️\n\n<b>NÚMERO:</b> <code>{cc_data['nome']}</code>\n<b>VALIDADE:</b> <code>{cc_data['senha']}</code>\n<b>CVV:</b> <code>{cc_data['duracao']}</code>\n<b>NOME:</b> <code>{cc_data['titular']}</code>\n<b>CPF:</b> <code>{cc_data['cpf']}</code>\n\n<b>OBRIGADO PELA PREFERÊNCIA!</b>"
-    bot.edit_message_text(chat_id=message.message.chat.id, message_id=message.message.message_id, text=texto_entrega, parse_mode='HTML')
+    try:
+        bot.edit_message_text(chat_id=message.message.chat.id, message_id=message.message.message_id, text=texto_entrega, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 
 def addsaldo(message):
     markup = InlineKeyboardMarkup()
@@ -1265,7 +1879,11 @@ def addsaldo(message):
     bt3 = InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='menu_start')
     markup.add(bt3)
     texto = api.Textos.adicionar_saldo()
-    bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    try:
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
 def pix_auto(message):
     token_mp = api.CredentialsChange.InfoPix.token_mp()
     if not token_mp or token_mp.strip() == "":
@@ -1329,11 +1947,19 @@ def verificar_pagamento(message, id_pag, valor):
                 print(e)
                 pass
             texto = api.Textos.pagamento_aprovado(id_pagamento=id_pag, saldo=api.InfoUser.saldo(message.chat.id))
-            bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML')
+            try:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML')
+            except telebot.apihelper.ApiTelegramException as e:
+                if 'message is not modified' not in e.description:
+                    raise
             break
         elif 'cancelled' in status_pag:
             texto = api.Textos.pagamento_expirado(id_pagamento=id_pag)
-            bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML')
+            try:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=texto, parse_mode='HTML')
+            except telebot.apihelper.ApiTelegramException as e:
+                if 'message is not modified' not in e.description:
+                    raise
             break
         elif 'pending' in status_pag:
             continue
@@ -1361,7 +1987,11 @@ def handle_criador(message):
         if message.text == '/criador':
             bot.send_message(chat_id=message.chat.id, text=txt, parse_mode='HTML', reply_markup=markup)
         else:
-            bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=txt, parse_mode='HTML', reply_markup=markup)
+            try:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, text=txt, parse_mode='HTML', reply_markup=markup)
+            except telebot.apihelper.ApiTelegramException as e:
+                if 'message is not modified' not in e.description:
+                    raise
 def trocar_token(message):
     api.CredentialsChange.mudar_token_bot(message.text)
     bot.reply_to(message, "Alterado com sucesso! Reiniciando...")
@@ -1415,7 +2045,11 @@ def callback_query(call):
         bp = InlineKeyboardButton('⭕ ZERAR DIAS', callback_data='parar_dias_creator')
         vo = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_painel_creator')
         markup = InlineKeyboardMarkup([[bt], [bs], [bp], [vo]])
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=txt, parse_mode='HTML', reply_markup=markup)
+        try:
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=txt, parse_mode='HTML', reply_markup=markup)
+        except telebot.apihelper.ApiTelegramException as e:
+            if 'message is not modified' not in e.description:
+                raise
         return
     if call.data == 'parar_dias_creator':
         api.Admin.zerar_vencimento()
@@ -1461,13 +2095,19 @@ def callback_query(call):
         menu_servicos(call.message)
     if call.data == 'desenvolvedor':
         show_developer_info(call.message)
+    if call.data == 'addsaldo':
+        addsaldo(call.message)
     #Menu pix
     if call.data == 'pix_manu':
         if api.CredentialsChange.StatusPix.pix_manual() == True:
-            pix_key = "1c053de7-4b53-4e88-9017-5b242fc75ba2"
-            texto = f"Para fazer a recarga, use a chave PIX (copia e cola) abaixo:\n\n<code>{pix_key}</code>\n\nApós o pagamento, envie o comprovante para o suporte para que seu saldo seja adicionado manualmente."
+            pix_key = html.escape(api.CredentialsChange.InfoPix.chave_pix_manual())
+            texto = f"Para fazer a recarga, use a seguinte chave PIX para realizar o pagamento:\n\n<code>{pix_key}</code>\n\nApós o pagamento, envie o comprovante para o suporte ({api.CredentialsChange.SuporteInfo.link_suporte()}) para que seu saldo seja adicionado manualmente."
             markup = InlineKeyboardMarkup([[InlineKeyboardButton(f'{api.Botoes.voltar()}', callback_data='addsaldo')]])
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+            try:
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, parse_mode='HTML', reply_markup=markup)
+            except telebot.apihelper.ApiTelegramException as e:
+                if 'message is not modified' not in e.description:
+                    raise
         else:
             return
     if call.data == 'pix_auto':
@@ -1489,8 +2129,8 @@ def callback_query(call):
     if call.data.split()[0] == 'comprar_cc':
         try:
             # Usamos '|' como separador para evitar problemas com nomes de bancos/bins que contêm espaços
-            nome_cc, numero_cc = ' '.join(call.data.split()[1:]).split('|')
-            entregar_cc(call, nome_cc, numero_cc)
+            nome_cc, numero_cc = ' '.join(call.data.split()[1:]).split('|') # nome_cc e numero_cc são os mesmos
+            entregar_cc(call, nome_cc, numero_cc) # A função entregar_cc agora usa o 'call'
         except (ValueError, IndexError):
             bot.answer_callback_query(call.id, "Erro ao processar a compra. Tente novamente.", show_alert=True)
     if call.data.split()[0] == 'comprar':
@@ -1716,6 +2356,9 @@ def callback_query(call):
     if call.data == 'mudar_token':
         bot.send_message(call.message.chat.id, "Me envie o novo token do mercado pago:", reply_markup=types.ForceReply())
         bot.register_next_step_handler(call.message, mudar_token)
+    if call.data == 'mudar_chave_pix_manual':
+        bot.send_message(call.message.chat.id, "Me envie a nova chave PIX manual (pode ser CPF/CNPJ, celular, e-mail ou chave aleatória):", reply_markup=types.ForceReply())
+        bot.register_next_step_handler(call.message, mudar_chave_pix_manual)
     if call.data == 'mudar_expiracao':
         bot.send_message(call.message.chat.id, f'Digite agora o novo tempo de expiração (EM MINUTOS)', reply_markup=types.ForceReply())
         bot.register_next_step_handler(call.message, mudar_expiracao)
@@ -1775,6 +2418,87 @@ def callback_query(call):
         processar_resgate(int(id), codigo)
     if call.data == 'listar_tcs':
         bot.answer_callback_query(call.id, "Esta funcionalidade ainda não foi implementada.", show_alert=True)
+    if call.data == 'servicos_laras':
+        servicos_laras_menu(call.message)
+    if call.data == 'configurar_laras':
+        configurar_laras(call.message)
+    if call.data == 'adicionar_lara':
+        iniciar_adicionar_lara(call.message)
+    if call.data == 'gerenciar_laras':
+        gerenciar_laras_menu(call)
+    if call.data.startswith('remover_lara_confirma'):
+        email = ' '.join(call.data.split()[1:])
+        remover_lara_confirma(call, email)
+    if call.data.startswith('remover_lara_executa'):
+        email = ' '.join(call.data.split()[1:])
+        remover_lara_executa(call, email)
+    if call.data.startswith('editar_lara_menu'):
+        email = ' '.join(call.data.split()[1:])
+        editar_lara_menu(call, email)
+    if call.data.startswith('editar_campo_lara'):
+        try:
+            email, campo = ' '.join(call.data.split()[1:]).split('|')
+            solicitar_novo_valor_lara(call, email, campo)
+        except (ValueError, IndexError):
+            bot.answer_callback_query(call.id, "Erro ao processar a edição.", show_alert=True)
+    if call.data.startswith('exibir_lara'):
+        email = ' '.join(call.data.split()[1:])
+        exibir_lara_compra(call, email)
+    if call.data.startswith('comprar_lara'):
+        email = ' '.join(call.data.split()[1:])
+        entregar_lara(call, email)
+    if call.data == 'configurar_ggs':
+        configurar_ggs(call.message)
+    if call.data == 'adicionar_gg':
+        iniciar_adicionar_gg(call.message)
+    if call.data == 'gerenciar_ggs_menu':
+        gerenciar_ggs_menu(call)
+    if call.data.startswith('listar_ggs_do_nivel'):
+        nivel = ' '.join(call.data.split()[1:])
+        listar_ggs_do_nivel(call, nivel)
+    if call.data.startswith('remover_gg_especifico'):
+        try:
+            nome, email = ' '.join(call.data.split()[1:]).split('|')
+            if api.Admin.ControleGGs.remover_gg(nome, email):
+                bot.answer_callback_query(call.id, "GG removida com sucesso!")
+                gg_data = api.ControleGGs.entregar_gg(nome, email)
+                nivel = gg_data.get('descricao') if gg_data else 'default'
+                listar_ggs_do_nivel(call, nivel)
+            else:
+                bot.answer_callback_query(call.id, "Erro: GG não encontrada.", show_alert=True)
+        except Exception as e:
+            bot.answer_callback_query(call.id, f"Erro ao processar: {e}", show_alert=True)
+    if call.data.startswith('confirmar_remover_nivel_gg'):
+        nivel = ' '.join(call.data.split()[1:])
+        confirmar_remover_nivel_gg(call, nivel)
+    if call.data.startswith('remover_nivel_gg_confirmado'):
+        nivel = ' '.join(call.data.split()[1:])
+        remover_nivel_gg_confirmado(call, nivel)
+    if call.data.startswith('editar_gg_menu'):
+        gg_identifier = ' '.join(call.data.split()[1:])
+        editar_gg_menu(call, gg_identifier)
+    if call.data.startswith('editar_campo_gg'):
+        try:
+            campo, numero_gg = ' '.join(call.data.split()[1:]).split('|')
+            solicitar_novo_valor_campo_gg(call, campo, numero_gg)
+        except (ValueError, IndexError):
+            bot.answer_callback_query(call.id, "Erro ao processar a edição.", show_alert=True)
+    if call.data == 'servicos_ggs':
+        servicos_ggs_menu(call.message)
+    if call.data.startswith('ver_gg_do_nivel'):
+        try:
+            partes = ' '.join(call.data.split()[1:]).split('|')
+            nivel, index = partes[0], int(partes[1])
+            ver_gg_do_nivel(call, nivel, index)
+        except (ValueError, IndexError):
+            bot.answer_callback_query(call.id, "Erro ao carregar GG.", show_alert=True)
+    if call.data.startswith('comprar_gg'):
+        try:
+            nome_gg, numero_gg = ' '.join(call.data.split()[1:]).split('|')
+            entregar_gg(call, nome_gg, numero_gg)
+        except (ValueError, IndexError):
+            bot.answer_callback_query(call.id, "Erro ao processar a compra. Tente novamente.", show_alert=True)
+
 
 def iniciar_verificacao():
     global bot_running

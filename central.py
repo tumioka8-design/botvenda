@@ -25,6 +25,10 @@ def ler_json(caminho_arquivo):
             return {"admins": []}
         if 'ccs' in caminho_arquivo:
             return {"ccs": []}
+        if 'laras' in caminho_arquivo:
+            return {"laras": []}
+        if 'ggs' in caminho_arquivo:
+            return {"ggs": []}
         if 'gift' in caminho_arquivo:
             return {"gift": []}
         return {}
@@ -200,6 +204,18 @@ class CredentialsChange():
             data = ler_json(CredentialsChange._credenciais_path)
             data["token_mp"] = str(token)
             escrever_json(CredentialsChange._credenciais_path, data)
+
+        @staticmethod
+        def chave_pix_manual():
+            data = ler_json(CredentialsChange._credenciais_path)
+            return str(data.get("chave_pix_manual", "Nenhuma chave configurada"))
+
+        @staticmethod
+        def mudar_chave_pix_manual(chave):
+            data = ler_json(CredentialsChange._credenciais_path)
+            data["chave_pix_manual"] = str(chave)
+            escrever_json(CredentialsChange._credenciais_path, data)
+            return True
 
         @staticmethod
         def deposito_minimo_pix():
@@ -632,6 +648,29 @@ class MudancaHistorico():
             escrever_json(MudancaHistorico._users_path, data)
 
     @staticmethod
+    def add_compra_lara(id, lara_data):
+        """Adiciona uma compra de 'Lara' ao histórico do usuário."""
+        user, data = InfoUser._get_user(id)
+        if user:
+            user["total_compras"] = user.get("total_compras", 0) + 1
+            compra_info = lara_data.copy() # Cria uma cópia para não modificar o original
+            compra_info["data_compra"] = f"{ViewTime.data_atual()} as {ViewTime.hora_atual()}"
+            user.setdefault("compras", []).append(compra_info)
+            escrever_json(MudancaHistorico._users_path, data)
+
+    @staticmethod
+    def add_compra_gg(id, gg_data):
+        """Adiciona uma compra de 'GG' ao histórico do usuário."""
+        user, data = InfoUser._get_user(id)
+        if user:
+            user["total_compras"] = user.get("total_compras", 0) + 1
+            compra_info = gg_data.copy()
+            compra_info["tipo_produto"] = "GG" # Identifica o tipo de produto
+            compra_info["data_compra"] = f"{ViewTime.data_atual()} as {ViewTime.hora_atual()}"
+            user.setdefault("compras", []).append(compra_info)
+            escrever_json(MudancaHistorico._users_path, data)
+
+    @staticmethod
     def add_pagamentos(id, valor, id_pag):
         user, data = InfoUser._get_user(id)
         if not user: return
@@ -872,6 +911,113 @@ class ControleLogins():
                 return acesso
         return None
 
+class ControleLaras():
+    _laras_path = 'database/laras.json'
+
+    @staticmethod
+    def add_lara(email, senha_email, senha_lara, sexo, nome, cpf, valor, banco):
+        """Adiciona uma nova 'Lara' ao banco de dados."""
+        data = ler_json(ControleLaras._laras_path)
+        data.setdefault("laras", []).append({
+            "email": email, "senha_email": senha_email, "senha_lara": senha_lara,
+            "sexo": sexo, "nome": nome, "cpf": cpf, "valor": valor, "banco": banco
+        })
+        escrever_json(ControleLaras._laras_path, data)
+        return True
+
+    @staticmethod
+    def pegar_todas_laras():
+        """Retorna uma lista de todas as 'Laras' no banco de dados."""
+        data = ler_json(ControleLaras._laras_path)
+        return data.get("laras", [])
+
+    @staticmethod
+    def pegar_lara_por_email(email):
+        """Busca uma 'Lara' específica pelo email."""
+        laras = ControleLaras.pegar_todas_laras()
+        for lara in laras:
+            if lara.get("email") == email:
+                return lara
+        return None
+
+    @staticmethod
+    def remover_lara(email):
+        """Remove uma 'Lara' do banco de dados pelo email."""
+        data = ler_json(ControleLaras._laras_path)
+        laras_originais = data.get("laras", [])
+        laras_restantes = [lara for lara in laras_originais if lara.get("email") != email]
+        if len(laras_restantes) < len(laras_originais):
+            data["laras"] = laras_restantes
+            escrever_json(ControleLaras._laras_path, data)
+            return True
+        return False
+
+    @staticmethod
+    def editar_campo_lara(email, campo, novo_valor):
+        """Função genérica para editar um campo de uma 'Lara' específica."""
+        data = ler_json(ControleLaras._laras_path)
+        for lara in data.get("laras", []):
+            if lara.get("email") == email:
+                lara[campo] = novo_valor
+                escrever_json(ControleLaras._laras_path, data)
+                return True
+        return False
+
+class ControleGGs():
+    _ggs_path = 'database/ggs.json'
+
+    @staticmethod
+    def pegar_servicos():
+        """Lista todos os tipos de GGs disponíveis (nível)."""
+        data = ler_json(ControleGGs._ggs_path)
+        return [{"nome": gg.get("nome"), "valor": gg.get("valor"), "descricao": gg.get("descricao")} for gg in data.get("ggs", [])]
+
+    @staticmethod
+    def pegar_info(nome):
+        """Pega as informações do primeiro GG disponível de um determinado tipo."""
+        data = ler_json(ControleGGs._ggs_path)
+        for gg in data.get("ggs", []):
+            if gg.get("nome") == nome:
+                try:
+                    valor = float(gg.get("valor"))
+                    return (
+                        gg.get("nome"), valor, gg.get("descricao"), gg.get("senha"),
+                        gg.get("duracao"), gg.get("titular"), gg.get("cpf")
+                    )
+                except (ValueError, TypeError, AttributeError):
+                    continue
+        return None
+
+    @staticmethod
+    def pegar_estoque(nome):
+        """Calcula o estoque para um tipo específico de GG."""
+        data = ler_json(ControleGGs._ggs_path)
+        return sum(1 for gg in data.get("ggs", []) if gg.get("nome") == nome)
+
+    @staticmethod
+    def entregar_gg(nome, numero_gg):
+        """Busca um GG específico pelo nome (nível) e número para entrega."""
+        data = ler_json(ControleGGs._ggs_path)
+        for gg in data.get("ggs", []):
+            # 'email' na estrutura original é usado para o número do cartão/gg
+            if gg.get("nome") == nome and gg.get("email") == numero_gg:
+                return gg
+        return None
+
+    @staticmethod
+    def remover_gg(nome, numero_gg):
+        """Remove um GG do estoque após a compra."""
+        data = ler_json(ControleGGs._ggs_path)
+        # 'email' na estrutura original é usado para o número do cartão/gg
+        ggs_restantes = [gg for gg in data.get("ggs", []) if not (gg.get("nome") == nome and gg.get("email") == numero_gg)]
+        if len(ggs_restantes) < len(data.get("ggs", [])):
+            data["ggs"] = ggs_restantes
+            escrever_json(ControleGGs._ggs_path, data)
+            return True
+        return False
+
+
+
 class ControleCCs():
     _ccs_path = 'database/ccs.json'
 
@@ -936,6 +1082,100 @@ class ControleCCs():
             return True
         return False
 class Admin():
+    class ControleGGs():
+        _ggs_path = 'database/ggs.json'
+
+        @staticmethod
+        def add_gg(nome, valor, descricao, email, senha, duracao, titular, cpf):
+            data = ler_json(Admin.ControleGGs._ggs_path)
+            data.setdefault("ggs", []).append({
+                "nome": nome, "valor": valor, "descricao": descricao, "email": email, 
+                "senha": senha, "duracao": duracao, "titular": titular, "cpf": cpf
+            })
+            escrever_json(Admin.ControleGGs._ggs_path, data)
+            return True
+        
+        @staticmethod
+        def pegar_niveis_unicos():
+            """Retorna uma lista de todos os níveis (descrições) de GGs únicos."""
+            data = ler_json(Admin.ControleGGs._ggs_path)
+            niveis = {gg.get("descricao").strip() for gg in data.get("ggs", []) if gg.get("descricao")}
+            return sorted(list(niveis))
+
+        @staticmethod
+        def pegar_ggs_por_nivel(nivel):
+            """Retorna todos os GGs que pertencem a um determinado nível."""
+            data = ler_json(Admin.ControleGGs._ggs_path)
+            return [gg for gg in data.get("ggs", []) if gg.get("descricao") == nivel]
+
+        @staticmethod
+        def remover_gg(nome, email):
+            data = ler_json(Admin.ControleGGs._ggs_path)
+            ggs_restantes = [gg for gg in data.get("ggs", []) if not (gg.get("nome") == nome and gg.get("email") == email)]
+            if len(ggs_restantes) < len(data.get("ggs", [])):
+                data["ggs"] = ggs_restantes
+                escrever_json(Admin.ControleGGs._ggs_path, data)
+                return True
+            return False
+        
+        @staticmethod
+        def remover_por_nome(nome):
+            data = ler_json(Admin.ControleGGs._ggs_path)
+            ggs_mantidos = [gg for gg in data["ggs"] if str(gg.get("nome")) != str(nome)]
+            data["ggs"] = ggs_mantidos
+            escrever_json(Admin.ControleGGs._ggs_path, data)
+            return True
+        
+        @staticmethod
+        def _editar_campo_gg(numero_gg, campo, novo_valor):
+            """Função genérica para editar um campo de um GG específico."""
+            data = ler_json(Admin.ControleGGs._ggs_path)
+            gg_encontrado = False
+            for gg in data.get("ggs", []):
+                if gg.get("nome") == numero_gg:
+                    gg[campo] = novo_valor
+                    gg_encontrado = True
+                    break
+            if gg_encontrado:
+                escrever_json(Admin.ControleGGs._ggs_path, data)
+            return gg_encontrado
+
+        @staticmethod
+        def mudar_valor_gg(numero_gg, novo_valor):
+            return Admin.ControleGGs._editar_campo_gg(numero_gg, 'valor', float(novo_valor))
+
+        @staticmethod
+        def mudar_nivel_gg(numero_gg, novo_nivel):
+            return Admin.ControleGGs._editar_campo_gg(numero_gg, 'descricao', novo_nivel)
+
+        @staticmethod
+        def mudar_titular_gg(numero_gg, novo_titular):
+            return Admin.ControleGGs._editar_campo_gg(numero_gg, 'titular', novo_titular)
+
+        @staticmethod
+        def mudar_cpf_gg(numero_gg, novo_cpf):
+            return Admin.ControleGGs._editar_campo_gg(numero_gg, 'cpf', novo_cpf)
+
+        @staticmethod
+        def remover_por_nivel(nivel):
+            data = ler_json(Admin.ControleGGs._ggs_path)
+            ggs_mantidos = [gg for gg in data.get("ggs", []) if gg.get("descricao") != nivel]
+            if len(ggs_mantidos) < len(data.get("ggs", [])):
+                data["ggs"] = ggs_mantidos
+                escrever_json(Admin.ControleGGs._ggs_path, data)
+                return True
+            return False
+        
+        @staticmethod
+        def estoque_total():
+            data = ler_json(Admin.ControleGGs._ggs_path)
+            return len(data.get("ggs", []))
+        
+        @staticmethod
+        def zerar_estoque():
+            escrever_json(Admin.ControleGGs._ggs_path, {"ggs": []})
+            return True
+
     _credenciais_path = 'settings/credenciais.json'
 
     class ControleCCs():
