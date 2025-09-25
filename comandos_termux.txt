@@ -1,0 +1,66 @@
+# --------------------------------------------------
+# GUIA RÁPIDO PARA RODAR O BOT NO TERMUX
+# --------------------------------------------------
+# Copie e cole cada linha de comando no seu Termux e pressione Enter.
+# Ignore as linhas que começam com '#' (são comentários).
+
+# --- PASSO 1: PREPARAR O AMBIENTE TERMUX ---
+
+# Atualiza a lista de pacotes e o sistema
+pkg update && pkg upgrade -y
+
+# Instala as ferramentas essenciais: Python, Git e Screen
+pkg install python git screen -y
+
+# Instala o 'pip' para gerenciar pacotes Python
+pkg install python-pip -y
+
+
+# --- PASSO 2: BAIXAR O CÓDIGO DO BOT ---
+
+# Clone (baixe) o seu projeto do GitHub.
+# SUBSTITUA A URL ABAIXO PELA URL DO SEU REPOSITÓRIO!
+git clone https://github.com/seu-usuario/seu-repositorio.git
+
+# Entre na pasta do seu projeto.
+# SUBSTITUA 'seu-repositorio' PELO NOME DA PASTA QUE FOI CRIADA.
+cd seu-repositorio
+
+# Se o seu código estiver dentro de uma subpasta (ex: AcessosBot), entre nela.
+# Se não, pule esta linha.
+cd AcessosBot
+
+
+# --- PASSO 3: INSTALAR AS DEPENDÊNCIAS DO BOT ---
+
+# Instala todas as bibliotecas Python que o bot precisa
+pip install -r requirements.txt
+
+
+# --- PASSO 4: INICIAR O BOT EM SEGUNDO PLANO ---
+
+# Cria uma nova "janela" virtual chamada 'bot'
+screen -S bot
+
+# Dentro da nova tela que aparecer, execute o bot:
+python bot.py
+
+# AGORA, PARA DEIXAR RODANDO EM SEGUNDO PLANO:
+# Pressione as teclas: Ctrl + A, e depois a tecla D.
+# Isso vai "desconectar" você da tela, mas o bot continuará rodando.
+
+
+# --- COMANDOS ÚTEIS PARA GERENCIAR O BOT ---
+
+# Para ver os logs do bot (reatachar à sessão):
+# screen -r bot
+
+# Para parar o bot (dentro da sessão screen):
+# Pressione Ctrl + C
+
+# Para atualizar o código do bot com as novidades do GitHub:
+# (Execute estes comandos na pasta do seu projeto)
+# git pull
+
+# Para listar todas as sessões screen ativas:
+# screen -ls
