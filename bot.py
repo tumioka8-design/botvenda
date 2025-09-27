@@ -272,11 +272,13 @@ def editar_gg_menu(call, gg_identifier):
 
     texto = (
         f"✏️ <b>Editando GG</b>\n\n"
-        f"<b>Número:</b> <code>{gg_data.get('nome')}</code>\n"
-        f"<b>Nível:</b> {gg_data.get('descricao')}\n"
-        f"<b>Valor:</b> R$ {gg_data.get('valor'):.2f}\n"
-        f"<b>Titular:</b> {gg_data.get('titular')}\n"
-        f"<b>CPF:</b> {gg_data.get('cpf')}\n\n"
+        f"<b>Número:</b> <code>{gg_data.get('nome', 'N/A')}</code>\n"
+        f"<b>Nível:</b> {gg_data.get('descricao', 'N/A')}\n"
+        f"<b>Valor:</b> R$ {float(gg_data.get('valor', 0)):.2f}\n"
+        f"<b>Validade:</b> <code>{gg_data.get('senha', 'N/A')}</code>\n"
+        f"<b>CVV:</b> <code>{gg_data.get('duracao', 'N/A')}</code>\n"
+        f"<b>Titular:</b> {gg_data.get('titular', 'N/A')}\n"
+        f"<b>CPF:</b> <code>{gg_data.get('cpf', 'N/A')}</code>\n\n"
         "Selecione o campo que deseja editar:"
     )
 
@@ -435,7 +437,17 @@ def editar_lara_menu(call, email):
         bot.answer_callback_query(call.id, "Erro: Lara não encontrada.", show_alert=True)
         return
 
-    texto = f"✏️ <b>Editando Lara:</b> <code>{lara.get('email')}</code>\n\nSelecione o campo que deseja editar:"
+    texto = (
+        f"✏️ <b>Editando Lara:</b> <code>{lara.get('email')}</code>\n\n"
+        f"<b>Senha E-mail:</b> <code>{lara.get('senha_email', 'N/A')}</code>\n"
+        f"<b>Senha Lara:</b> <code>{lara.get('senha_lara', 'N/A')}</code>\n"
+        f"<b>Sexo:</b> {lara.get('sexo', 'N/A')}\n"
+        f"<b>Nome:</b> {lara.get('nome', 'N/A')}\n"
+        f"<b>CPF:</b> <code>{lara.get('cpf', 'N/A')}</code>\n"
+        f"<b>Banco:</b> {lara.get('banco', 'N/A')}\n"
+        f"<b>Valor:</b> R$ {float(lara.get('valor', 0)):.2f}\n\n"
+        "Selecione o campo que deseja editar:"
+    )
     markup = InlineKeyboardMarkup()
     campos = ["email", "senha_email", "senha_lara", "sexo", "nome", "cpf", "banco", "valor"]
     
@@ -742,21 +754,73 @@ def mudar_valor_todos(message):
     except:
         bot.reply_to(message, "Erro ao alterar valores.")
 def configurar_logins(message):
-    separador = api.CredentialsChange.separador()
-    texto = f'📦 <b>LOGINS NO ESTOQUE: {api.ControleLogins.estoque_total()}</b>\n\n◎ ══════ ❈ ══════ ◎\n📮 <b>ADICIONAR LOGIN</b>\n◎ ══════ ❈ ══════ ◎\nApós apertar vai solicitar os logins que você deseja abastecer, eles devem ser enviados no formato: <i>NOME{separador}VALOR{separador}DESCRICAO{separador}EMAIL{separador}SENHA{separador}DURACAO</i>\nPara abastecer mais de um login basta enviar desta mesma maneira um abaixo do outro, ou pulando linhas, você pode pular quantas linhas quiser de um login para outro.\n┕━━━━╗✹╔━━━━┙\n\n\n◎ ══════ ❈ ══════ ◎\n🥾 <b>REMOVER login</b>\n◎ ══════ ❈ ══════ ◎\nApós clicado basta enviar o serviço e o email, separados por {separador}\nEx: <i>NETFLIX{separador}EMAIL</i>\n┕━━━━╗✹╔━━━━┙\n\n\n◎ ══════ ❈ ══════ ◎\n❌ <b>REMOVER POR PLATAFORMA</b>\n◎ ══════ ❈ ══════ ◎\nApós clicado, basta enviar o nome da plataforma, automaticamente todos os logins serão removidos.\n┕━━━━╗✹╔━━━━┙\n\n\n◎ ══════ ❈ ══════ ◎\n🗑 <b>ZERAR ESTOQUE</b>\n◎ ══════ ❈ ══════ ◎\nApós clicar, todos os logins abastecidos serão removidos.\n┕━━━━╗✹╔━━━━┙\n\n\n◎ ══════ ❈ ══════ ◎\n💸 <b>MUDAR VALOR DO SERVIÇO</b>\n◎ ══════ ❈ ══════ ◎\nApós clicar, envie o nome do serviço e o valor, separados por {separador}.\nEX: <i>SERVICO{separador}VALOR</i>\n┕━━━━╗✹╔━━━━┙\n\n\n◎ ══════ ❈ ══════ ◎\n🎫 <b>MUDAR VALOR DE TODOS</b>\n◎ ══════ ❈ ══════ ◎\nApós clicar, envie o valor, e todos os serviços abastecidos terão seus valores alterados. (útil para queima de estoque)\n┕━━━━╗✹╔━━━━┙'
+    texto = f'📦 <b>LOGINS NO ESTOQUE: {api.ControleLogins.estoque_total()}</b>\n\n<i>Selecione uma das opções abaixo para gerenciar o estoque de logins.</i>'
     bt = InlineKeyboardButton('📮 ADICIONAR LOGIN', callback_data='adicionar_login')
-    bt2 = InlineKeyboardButton('🥾 REMOVER LOGIN', callback_data='remover_login')
-    bt3 = InlineKeyboardButton('❌ REMOVER POR PLATAFORMA', callback_data='remover_por_plataforma')
-    bt4 = InlineKeyboardButton('🗑 ZERAR ESTOQUE', callback_data='zerar_estoque')
-    bt5 = InlineKeyboardButton('💸 MUDAR VALOR DO SERVIÇO', callback_data='mudar_valor_servico')
-    bt6 = InlineKeyboardButton('🎫 MUDAR VALOR DE TODOS', callback_data='mudar_valor_todos')
-    bt7 = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
-    markup = InlineKeyboardMarkup([[bt], [bt2], [bt3], [bt4], [bt5], [bt6], [bt7]])
+    bt_gerenciar = InlineKeyboardButton('✏️ EDITAR / REMOVER LOGIN', callback_data='gerenciar_logins_menu')
+    bt_voltar = InlineKeyboardButton('↩ VOLTAR', callback_data='voltar_paineladm')
+    markup = InlineKeyboardMarkup([[bt], [bt_gerenciar], [bt_voltar]])
     try:
         bot.edit_message_text(chat_id=message.chat.id, text=texto, message_id=message.message_id, reply_markup=markup, parse_mode='HTML')
     except telebot.apihelper.ApiTelegramException as e:
         if 'message is not modified' not in e.description:
             raise
+
+# --- Novo fluxo de Gerenciamento de Logins ---
+def gerenciar_logins_menu(call):
+    """Exibe a lista de logins disponíveis para gerenciamento."""
+    logins = api.ControleLogins.pegar_todos_logins()
+    markup = InlineKeyboardMarkup()
+    texto = "✏️ <b>Gerenciar Logins</b>\n\nSelecione um para editar ou remover:\n\n"
+
+    if not logins:
+        texto += "Não há logins no estoque."
+    else:
+        for i, login in enumerate(logins):
+            nome = login.get("nome")
+            email = login.get("email")
+            valor = login.get("valor", 0)
+            texto_login = f"{nome} - <code>{email}</code> - R${valor:.2f}"
+            # Usamos o índice (i) como identificador único para esta sessão
+            markup.add(
+                InlineKeyboardButton(f"{nome} - R${valor:.2f}", callback_data=f"editar_login_menu {i}"),
+                InlineKeyboardButton("❌", callback_data=f"remover_login_especifico {i}")
+            )
+
+    markup.add(InlineKeyboardButton('↩ VOLTAR', callback_data='configurar_logins'))
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
+
+def editar_login_menu(call, login_index):
+    """Exibe o menu de edição para um login específico."""
+    try:
+        login_index = int(login_index)
+        login_data = api.ControleLogins.pegar_login_por_indice(login_index)
+    except (ValueError, IndexError):
+        bot.answer_callback_query(call.id, "Erro: Login não encontrado.", show_alert=True)
+        return
+
+    if not login_data:
+        bot.answer_callback_query(call.id, "Erro: Login não encontrado.", show_alert=True)
+        gerenciar_logins_menu(call)
+        return
+
+    texto = (
+        f"✏️ <b>Editando Login</b>\n\n"
+        f"<b>Serviço:</b> {login_data.get('nome', 'N/A')}\n"
+        f"<b>Valor:</b> R$ {float(login_data.get('valor', 0)):.2f}\n"
+        f"<b>Descrição:</b> {login_data.get('descricao', 'N/A')}\n"
+        f"<b>Email/User:</b> <code>{login_data.get('email', 'N/A')}</code>\n"
+        f"<b>Senha:</b> <code>{login_data.get('senha', 'N/A')}</code>\n"
+        f"<b>Info Extra:</b> <code>{login_data.get('duracao', 'N/A')}</code>\n\n"
+        "Selecione o campo que deseja editar:"
+    )
+
+    markup = InlineKeyboardMarkup()
+    campos = ['nome', 'valor', 'descricao', 'email', 'senha', 'duracao']
+    for campo in campos:
+        markup.add(InlineKeyboardButton(f"Editar {campo.title()}", callback_data=f"editar_campo_login {login_index}|{campo}"))
+    
+    markup.add(InlineKeyboardButton("↩️ Voltar", callback_data="gerenciar_logins_menu"))
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto, reply_markup=markup, parse_mode='HTML')
 
 #Menu CCs
 def remover_cc(message):
@@ -887,11 +951,13 @@ def editar_cc_menu(call, cc_identifier):
 
     texto = (
         f"✏️ <b>Editando Cartão</b>\n\n"
-        f"<b>Número:</b> <code>{cc_data.get('nome')}</code>\n"
-        f"<b>Nível:</b> {cc_data.get('descricao')}\n"
-        f"<b>Valor:</b> R$ {cc_data.get('valor'):.2f}\n"
-        f"<b>Titular:</b> {cc_data.get('titular')}\n"
-        f"<b>CPF:</b> {cc_data.get('cpf')}\n\n"
+        f"<b>Número:</b> <code>{cc_data.get('nome', 'N/A')}</code>\n"
+        f"<b>Nível:</b> {cc_data.get('descricao', 'N/A')}\n"
+        f"<b>Valor:</b> R$ {float(cc_data.get('valor', 0)):.2f}\n"
+        f"<b>Validade:</b> <code>{cc_data.get('senha', 'N/A')}</code>\n"
+        f"<b>CVV:</b> <code>{cc_data.get('duracao', 'N/A')}</code>\n"
+        f"<b>Titular:</b> {cc_data.get('titular', 'N/A')}\n"
+        f"<b>CPF:</b> <code>{cc_data.get('cpf', 'N/A')}</code>\n\n"
         "Selecione o campo que deseja editar:"
     )
 
@@ -2235,24 +2301,8 @@ def callback_query(call):
     if call.data == 'adicionar_login':
         # Inicia o novo fluxo passo a passo para adicionar logins
         iniciar_adicionar_login(call.message)
-    if call.data == 'remover_login':
-        bot.send_message(call.message.chat.id, f"Envie o login que deseja remover, envie o nome da plataforma e o email, separados por {api.CredentialsChange.separador()}\nEx: NETFLIX{api.CredentialsChange.separador()}goldziin@dev.com", parse_mode='HTML', reply_markup=types.ForceReply())
-        bot.register_next_step_handler(call.message, remover_login)
-    if call.data == 'remover_por_plataforma':
-        bot.send_message(call.message.chat.id, "Envie o nome da plataforma que deseja remover do estoque:", reply_markup=types.ForceReply())
-        bot.register_next_step_handler(call.message, remover_por_plataforma)
-    if call.data == 'zerar_estoque':
-        try:
-            api.ControleLogins.zerar_estoque()
-            bot.answer_callback_query(call.id, text="Estoque zerado com sucesso!", show_alert=True)
-        except:
-            bot.answer_callback_query(call.id, text="Falha ao zerar o estoque.", show_alert=True)
-    if call.data == 'mudar_valor_servico':
-        bot.send_message(call.message.chat.id, f"Digite o serviço que terá seu valor mudado e o novo valor, separados por {api.CredentialsChange.separador()}\nEx: NETFLIX{api.CredentialsChange.separador()}10", reply_markup=types.ForceReply())
-        bot.register_next_step_handler(call.message, mudar_valor_servico)
-    if call.data == 'mudar_valor_todos':
-        bot.send_message(call.message.chat.id, "Me envie o novo valor dos acessos:", reply_markup=types.ForceReply())
-        bot.register_next_step_handler(call.message, mudar_valor_todos)
+    if call.data == 'gerenciar_logins_menu':
+        gerenciar_logins_menu(call)
     # Configurações de CCs
     if call.data == 'configurar_ccs':
         configurar_ccs(call)
@@ -2545,6 +2595,34 @@ def callback_query(call):
             entregar_gg(call, nome_gg, numero_gg)
         except (ValueError, IndexError):
             bot.answer_callback_query(call.id, "Erro ao processar a compra. Tente novamente.", show_alert=True)
+
+    # --- Handlers para Gerenciamento de Logins ---
+    if call.data.startswith('remover_login_especifico'):
+        try:
+            login_index = int(call.data.split()[1])
+            if api.ControleLogins.remover_login_por_indice(login_index):
+                bot.answer_callback_query(call.id, "Login removido com sucesso!")
+                gerenciar_logins_menu(call) # Atualiza a lista
+            else:
+                bot.answer_callback_query(call.id, "Erro: Login não encontrado.", show_alert=True)
+        except (ValueError, IndexError):
+            bot.answer_callback_query(call.id, "Erro ao processar remoção.", show_alert=True)
+
+    if call.data.startswith('editar_login_menu'):
+        login_index = call.data.split()[1]
+        editar_login_menu(call, login_index)
+
+    if call.data.startswith('editar_campo_login'):
+        try:
+            identificador, campo = call.data.split()[1].split('|')
+            login_index = int(identificador)
+            prompt = f"Digite o novo valor para <b>{campo}</b>:"
+            bot.send_message(call.message.chat.id, prompt, parse_mode='HTML', reply_markup=types.ForceReply())
+            # Precisamos de uma função para salvar o campo editado
+            # bot.register_next_step_handler(call.message, salvar_campo_login_editado, login_index, campo)
+            bot.answer_callback_query(call.id, "Funcionalidade de edição de campo de login em desenvolvimento.")
+        except (ValueError, IndexError):
+            bot.answer_callback_query(call.id, "Erro ao processar edição de login.", show_alert=True)
 
 
 def iniciar_verificacao():

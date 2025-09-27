@@ -805,6 +805,12 @@ class ControleLogins():
         return True
 
     @staticmethod
+    def pegar_todos_logins():
+        """Retorna uma lista de todos os logins no banco de dados."""
+        data = ler_json(ControleLogins._acessos_path)
+        return data.get("acessos", [])
+
+    @staticmethod
     def remover_login(nome, email):
         data = ler_json(ControleLogins._acessos_path)
         acessos_restantes = [a for a in data.get("acessos", []) if not (a.get("nome") == nome and a.get("email") == email)]
@@ -813,6 +819,28 @@ class ControleLogins():
             escrever_json(ControleLogins._acessos_path, data)
             return True
         return False
+
+    @staticmethod
+    def remover_login_por_indice(indice):
+        """Remove um login do banco de dados pelo seu índice na lista."""
+        data = ler_json(ControleLogins._acessos_path)
+        acessos = data.get("acessos", [])
+        if 0 <= indice < len(acessos):
+            acessos.pop(indice)
+            data["acessos"] = acessos
+            escrever_json(ControleLogins._acessos_path, data)
+            return True
+        return False
+
+    @staticmethod
+    def pegar_login_por_indice(indice):
+        """Busca um login específico pelo seu índice na lista."""
+        try:
+            data = ler_json(ControleLogins._acessos_path)
+            acessos = data.get("acessos", [])
+            return acessos[indice]
+        except (IndexError, TypeError):
+            return None
 
     @staticmethod
     def pegar_servicos():

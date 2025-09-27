@@ -1,3 +1,14 @@
 {
-    "ccs": []
+    "ccs": [
+        {
+            "nome": "5365678645674567",
+            "valor": 24.0,
+            "descricao": "sim",
+            "email": "5365678645674567",
+            "senha": "2424",
+            "duracao": "dwadawd",
+            "titular": "asd2war",
+            "cpf": "adawdawd"
+        }
+    ]
 }
