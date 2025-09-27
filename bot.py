@@ -649,43 +649,66 @@ def configuracoes_geral(message):
     except telebot.apihelper.ApiTelegramException as e:
         if 'message is not modified' not in e.description:
             raise
+
 def trocar_suporte(message, idcall):
-    suporte = message.text
-    api.CredentialsChange.SuporteInfo.mudar_link_suporte(str(suporte))
+    """Atualiza o link de suporte e notifica o admin."""
+    api.CredentialsChange.SuporteInfo.mudar_link_suporte(str(message.text))
     bot.answer_callback_query(idcall, text="Suporte alterado com sucesso!", show_alert=True)
+
 def mudar_separador(message, callid):
-    sep = message.text
-    api.CredentialsChange.mudar_separador(sep)
+    """Atualiza o caractere separador e notifica o admin."""
+    api.CredentialsChange.mudar_separador(message.text)
     bot.answer_callback_query(callid, "Separador alterado com sucesso!", show_alert=True)
-#Menu login
-def adicionar_login(message):
-    sep = message.text.strip().split('\n')
-    separador = api.CredentialsChange.separador()
-    quantity = 0
-    for ordem in sep:
-        if len(ordem) > 0:
-            try:
-                sp = ordem.split(f'{separador}')
-                servico = sp[0]
-                valor_str = sp[1]
-                descricao = sp[2]
-                email = sp[3]
-                senha = sp[4]
-                duracao = sp[5]
-                if len(sp) == 6:
-                    try:
-                        # Converte o valor para float, tratando vírgulas e notificando em caso de erro.
-                        valor_float = float(valor_str.replace(',', '.'))
-                        api.ControleLogins.add_login(nome=servico, valor=valor_float, descricao=descricao, email=email, senha=senha, duracao=duracao)
-                        quantity += 1
-                    except ValueError:
-                        bot.reply_to(message, f"O valor '{valor_str}' do serviço '{servico}' não é um número válido e não foi adicionado.")
-                else:
-                    bot.reply_to(message, f"Formato invalido! O login {servico} não foi adicionado!")
-            except IndexError:
-                bot.reply_to(message, f"Erro ao adicionar a linha: `{ordem}`. Formato inválido ou campos faltando. Verifique se usou o separador corretamente.", parse_mode='Markdown')
-        pass
-    bot.reply_to(message, f"Feito! Você abasteceu <b>{quantity}</b> login.", parse_mode='HTML')
+
+# --- Novo fluxo passo a passo para adicionar Login ---
+def iniciar_adicionar_login(message):
+    """Inicia o processo de adicionar login, pedindo o nome do serviço."""
+    bot.send_message(message.chat.id, "📁 Qual o <b>nome do serviço</b>? (Ex: Netflix, Spotify)", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_valor_login)
+
+def pedir_valor_login(message):
+    """Pede o valor de venda do login."""
+    nome_servico = message.text
+    bot.send_message(message.chat.id, "💰 Qual o <b>valor de venda</b> do login?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_descricao_login, nome_servico)
+
+def pedir_descricao_login(message, nome_servico):
+    """Pede a descrição do login."""
+    try:
+        valor_login = float(message.text.replace(',', '.'))
+    except ValueError:
+        bot.reply_to(message, "❌ Valor inválido. Por favor, envie apenas números. O processo foi cancelado.")
+        return
+    bot.send_message(message.chat.id, "📝 Qual a <b>descrição</b> do produto? (Ex: Tela Privada, Plano Família)", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_email_login, nome_servico, valor_login)
+
+def pedir_email_login(message, nome_servico, valor_login):
+    """Pede o email/usuário do login."""
+    descricao_login = message.text
+    bot.send_message(message.chat.id, "📧 Qual o <b>email ou usuário</b> da conta?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_senha_login, nome_servico, valor_login, descricao_login)
+
+def pedir_senha_login(message, nome_servico, valor_login, descricao_login):
+    """Pede a senha do login."""
+    email_login = message.text
+    bot.send_message(message.chat.id, "🔑 Qual a <b>senha</b> da conta?", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, pedir_duracao_login, nome_servico, valor_login, descricao_login, email_login)
+
+def pedir_duracao_login(message, nome_servico, valor_login, descricao_login, email_login):
+    """Pede a duração ou informação extra."""
+    senha_login = message.text
+    bot.send_message(message.chat.id, "⏳ Qual a <b>duração ou informação extra</b>? (Ex: 30 dias, site.com)", parse_mode='HTML', reply_markup=types.ForceReply())
+    bot.register_next_step_handler(message, finalizar_adicao_login, nome_servico, valor_login, descricao_login, email_login, senha_login)
+
+def finalizar_adicao_login(message, nome_servico, valor_login, descricao_login, email_login, senha_login):
+    """Salva o login no banco de dados e informa o admin."""
+    duracao_login = message.text
+    try:
+        api.ControleLogins.add_login(nome=nome_servico, valor=valor_login, descricao=descricao_login, email=email_login, senha=senha_login, duracao=duracao_login)
+        bot.reply_to(message, f"✅ <b>Login adicionado com sucesso!</b>\n\n<b>Serviço:</b> {nome_servico}\n<b>Valor:</b> R$ {valor_login:.2f}\n<b>Email:</b> <code>{email_login}</code>", parse_mode='HTML')
+    except Exception as e:
+        bot.reply_to(message, f"❌ Ocorreu um erro ao adicionar o login: {e}")
+
 def remover_login(message):
     separador = api.CredentialsChange.separador()
     try:
@@ -2210,9 +2233,8 @@ def callback_query(call):
     if call.data == 'configurar_logins':
         configurar_logins(call.message)
     if call.data == 'adicionar_login':
-        separador = api.CredentialsChange.separador()
-        bot.send_message(call.message.chat.id, f"Envie os acessos que deseja adicionar, envie no formato:\nNOME{separador}VALOR{separador}DESCRICAO{separador}EMAIL{separador}SENHA{separador}DURACAO", parse_mode='HTML', reply_markup=types.ForceReply())
-        bot.register_next_step_handler(call.message, adicionar_login)
+        # Inicia o novo fluxo passo a passo para adicionar logins
+        iniciar_adicionar_login(call.message)
     if call.data == 'remover_login':
         bot.send_message(call.message.chat.id, f"Envie o login que deseja remover, envie o nome da plataforma e o email, separados por {api.CredentialsChange.separador()}\nEx: NETFLIX{api.CredentialsChange.separador()}goldziin@dev.com", parse_mode='HTML', reply_markup=types.ForceReply())
         bot.register_next_step_handler(call.message, remover_login)

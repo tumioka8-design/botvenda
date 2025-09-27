@@ -1,3 +1,12 @@
 {
-    "acessos": []
+    "acessos": [
+        {
+            "nome": "kabum",
+            "valor": 5.0,
+            "descricao": "tela privada",
+            "email": "22525625@gmail.com",
+            "senha": "114146523yheh",
+            "duracao": "45"
+        }
+    ]
 }
