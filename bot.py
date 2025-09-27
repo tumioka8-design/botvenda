@@ -2654,21 +2654,33 @@ def main():
     print("🤖 Bot online e funcionando...")
     print("🛑 Para parar o bot, use Ctrl+C ou execute stop_bot.bat")
     
-    bot.send_message(chat_id=api.CredentialsChange.id_dono(), text='🤖 <b>SEU BOT FOI REINICIADO!</b> 🤖', parse_mode='HTML', reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('🔧 PAINEL ADM', callback_data='voltar_paineladm')]]))
+    try:
+        bot.send_message(chat_id=api.CredentialsChange.id_dono(), text='🤖 <b>SEU BOT FOI REINICIADO!</b> 🤖', parse_mode='HTML', reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('🔧 PAINEL ADM', callback_data='voltar_paineladm')]]))
+    except Exception as e:
+        print(f"⚠️ Aviso: Não foi possível enviar a mensagem de reinicialização. Erro: {e}")
 
     print("=" * 50)    
-    try:
-        # infinity_polling já lida com reconexão e loop.
-        # O timeout e long_polling_timeout ajudam a não ficar "preso".
-        # O signal_handler vai chamar bot.stop_polling() para sair do loop.
-        bot.infinity_polling(timeout=10, long_polling_timeout=5)
-    except KeyboardInterrupt:
-        print("\n[INFO] Interrupção manual detectada.")
-    finally:
-        bot_running = False
-        print("🛑 Finalizando bot...")
-        # Garante que o polling pare
-        bot.stop_polling()
+    
+    # Loop de polling robusto para lidar com erros de conexão
+    while bot_running:
+        try:
+            # O timeout e long_polling_timeout ajudam a não ficar "preso".
+            # O signal_handler vai chamar bot.stop_polling() para sair do loop.
+            bot.infinity_polling(timeout=20, long_polling_timeout=15)
+        except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
+            print(f"⚠️ Erro de conexão detectado: {e}")
+            print("   Tentando reconectar em 15 segundos...")
+            time.sleep(15)
+        except KeyboardInterrupt:
+            print("\n[INFO] Interrupção manual detectada.")
+            bot_running = False
+        except Exception as e:
+            print(f"❌ Erro inesperado no polling: {e}")
+            print("   Reiniciando em 30 segundos...")
+            time.sleep(30)
+
+    print("🛑 Finalizando bot...")
+    bot.stop_polling()
 
 if __name__ == "__main__":
     main()
