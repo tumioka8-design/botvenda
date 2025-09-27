@@ -1,16 +1,46 @@
-# Arquivos de cache e compilados do Python
+# -------------------------------------------------------------------
+# ARQUIVOS E PASTAS GERADOS PELO BOT (NÃO ENVIAR PARA O GITHUB)
+# -------------------------------------------------------------------
+# Ignora todos os arquivos de banco de dados (.json) dentro da pasta 'database'.
+# ESSA É A LINHA MAIS IMPORTANTE PARA EVITAR PERDA DE DADOS NO CELULAR.
+database/*.json
+
+# Ignora a pasta de históricos de usuários gerados.
+historicos/
+
+# Ignora a pasta de logs de registro, compra e recarga.
+log/
+
+# Ignora o arquivo temporário de transmissão de mensagens.
+mensagem_transmissora.txt
+
+# -------------------------------------------------------------------
+# ARQUIVOS DE CACHE E TEMPORÁRIOS DO PYTHON
+# -------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Arquivos de log e erro
+# -------------------------------------------------------------------
+# ARQUIVOS DE LOG, PID E TEMPORÁRIOS
+# -------------------------------------------------------------------
 *.log
+*.pid
 bot_error.log
+*.tmp
 
-# Ambientes virtuais
+# -------------------------------------------------------------------
+# AMBIENTES VIRTUAIS
+# -------------------------------------------------------------------
 venv/
 .venv/
+env/
+ENV/
 
-# Arquivos de configuração de IDEs
+# -------------------------------------------------------------------
+# ARQUIVOS DE CONFIGURAÇÃO DE IDEs E EDITORES
+# -------------------------------------------------------------------
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
