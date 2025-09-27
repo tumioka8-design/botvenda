@@ -603,6 +603,31 @@ def ver_gg_do_nivel(call, nivel, index):
         if 'message is not modified' not in e.description:
             raise
 
+def entregar_produto_generico(call, produto_data, funcao_remover, funcao_historico):
+    """Função genérica para processar a compra e entrega de produtos (CC, GG)."""
+    if not produto_data:
+        bot.answer_callback_query(call.id, "Erro: Produto não encontrado. Pode já ter sido vendido.", show_alert=True)
+        return
+
+    valor = float(produto_data['valor'])
+    if api.InfoUser.saldo(call.from_user.id) < valor:
+        bot.answer_callback_query(call.id, "Saldo insuficiente!", show_alert=True)
+        return
+
+    api.InfoUser.tirar_saldo(call.from_user.id, valor)
+    # 'nome' é o número/id, 'email' também é o número/id na estrutura original
+    funcao_remover(produto_data['nome'], produto_data['email'])
+    funcao_historico(call.from_user.id, produto_data)
+    
+    # Formata a mensagem de entrega para o usuário
+    texto_entrega = f"🥳 <b>COMPRA REALIZADA COM SUCESSO</b> 🥳\n\n⚜️ <b>{produto_data['descricao'].upper()}</b> ⚜️\n\n<b>NÚMERO:</b> <code>{produto_data['nome']}</code>\n<b>VALIDADE:</b> <code>{produto_data['senha']}</code>\n<b>CVV:</b> <code>{produto_data['duracao']}</code>\n<b>NOME:</b> <code>{produto_data['titular']}</code>\n<b>CPF:</b> <code>{produto_data['cpf']}</code>\n\n<b>OBRIGADO PELA PREFERÊNCIA!</b>"
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=texto_entrega, parse_mode='HTML')
+    except telebot.apihelper.ApiTelegramException as e:
+        if 'message is not modified' not in e.description:
+            raise
+
+
 def entregar_gg(call, nome_gg, numero_gg):
     """Processa a compra e entrega da GG."""
     gg_data = api.ControleGGs.entregar_gg(nome_gg, numero_gg)

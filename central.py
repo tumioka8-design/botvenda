@@ -34,10 +34,18 @@ def ler_json(caminho_arquivo):
         return {}
 
 def escrever_json(caminho_arquivo, dados):
-    """Escreve dados em um arquivo JSON."""
+    """Escreve dados em um arquivo JSON de forma atômica para evitar corrupção."""
     os.makedirs(os.path.dirname(caminho_arquivo), exist_ok=True)
-    with open(caminho_arquivo, 'w', encoding='utf-8') as f:
-        json.dump(dados, f, indent=4)
+    # Define um caminho para o arquivo temporário
+    caminho_temporario = f"{caminho_arquivo}.tmp"
+    try:
+        # Escreve os dados no arquivo temporário primeiro
+        with open(caminho_temporario, 'w', encoding='utf-8') as f:
+            json.dump(dados, f, indent=4)
+        # Se a escrita for bem-sucedida, renomeia o arquivo temporário para o original
+        os.replace(caminho_temporario, caminho_arquivo)
+    except Exception as e:
+        print(f"ERRO CRÍTICO ao escrever em {caminho_arquivo}: {e}")
 
 class ViewTime():
     @staticmethod
@@ -1290,6 +1298,53 @@ class Admin():
         def zerar_estoque():
             escrever_json(Admin.ControleCCs._ccs_path, {"ccs": []})
             return True
+
+        @staticmethod
+        def check_cc(cc_data, valor_teste=1.50):
+            """
+            Tenta realizar uma cobrança de teste em um cartão para verificar seu status.
+            Retorna uma tupla (status, mensagem).
+            Esta é uma SIMULAÇÃO. A integração real com a API do MP é mais complexa.
+            """
+            # A integração real exigiria a criação de um token de cartão primeiro.
+            # Documentação: https://www.mercadopago.com.br/developers/pt/reference/cards/_cards/post
+
+            # Para fins de demonstração, vamos simular a resposta da API.
+            # Em um cenário real, você faria a chamada à API aqui.
+            # sdk = mercadopago.SDK(str(CredentialsChange.InfoPix.token_mp()))
+            # ... código para criar token e pagamento ...
+            # result = sdk.payment().create(payment_data)
+            # status = result['response']['status']
+            # detail = result['response']['status_detail']
+
+            # --- INÍCIO DA SIMULAÇÃO ---
+            numero_cc = cc_data.get("nome", "")
+            if not numero_cc or len(numero_cc) < 13:
+                return "ERRO", "Número de cartão inválido"
+
+            # Simula diferentes respostas com base no final do número do cartão
+            last_digit = int(numero_cc[-1])
+
+            if last_digit in [0, 1, 2, 3]: # 40% de chance de ser LIVE
+                status, detail = "approved", "accredited"
+            elif last_digit in [4, 5]: # 20% de chance de ser LIVE (fundos insuficientes)
+                status, detail = "rejected", "cc_rejected_insufficient_amount"
+            else: # 40% de chance de ser DEAD
+                status, detail = "rejected", random.choice([
+                    "cc_rejected_bad_filled_card_number",
+                    "cc_rejected_bad_filled_date",
+                    "cc_rejected_other_reason"
+                ])
+            # --- FIM DA SIMULAÇÃO ---
+
+            if status == "approved":
+                return "LIVE", f"Aprovado (R$ {valor_teste:.2f})"
+            elif detail == "cc_rejected_insufficient_amount":
+                return "LIVE", "Fundos Insuficientes"
+            elif status == "rejected":
+                return "DEAD", detail.replace("cc_rejected_", "").replace("_", " ").title()
+            else:
+                return "ERRO", status
 
     @staticmethod
     def total_users():
