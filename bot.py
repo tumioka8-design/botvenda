@@ -57,9 +57,16 @@ try:
     me = bot.get_me()
     BOT_USERNAME = me.username
     print(f"🤖 Bot ID: {me.id}, Username: @{BOT_USERNAME}")
+except telebot.apihelper.ApiTelegramException as e:
+    print(f"❌ Erro fatal da API do Telegram: {e}")
+    print("   Verifique se o token do bot em 'settings/credenciais.json' está correto e não foi revogado.")
+    sys.exit(1)
 except Exception as e:
     print(f"❌ Erro fatal ao inicializar o bot: {e}")
-    print("   Verifique se o token do bot em 'settings/credenciais.json' está correto.")
+    if "timed out" in str(e) or "Connection" in str(e):
+        print("   [DICA] Este parece ser um erro de conexão. Verifique sua internet ou se o acesso ao Telegram não está bloqueado.")
+    else:
+        print("   Verifique as configurações do bot e as dependências.")
     sys.exit(1)
 
 # --- Funções de Verificação e Handlers ---

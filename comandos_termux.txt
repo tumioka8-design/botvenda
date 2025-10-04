@@ -1,66 +1,37 @@
-# --------------------------------------------------
-# GUIA RÁPIDO PARA RODAR O BOT NO TERMUX
-# --------------------------------------------------
-# Copie e cole cada linha de comando no seu Termux e pressione Enter.
-# Ignore as linhas que começam com '#' (são comentários).
+### GUIA DE INSTALAÇÃO DO BOT (TERMUX)
 
-# --- PASSO 1: PREPARAR O AMBIENTE TERMUX ---
+**Primeiro, instale o Termux:**
+É muito importante que você instale o Termux pela loja F-Droid. A versão da Play Store está desatualizada e não vai funcionar.
+*   Acesse este link e baixe o app: https://f-droid.org/pt_BR/packages/com.termux/
 
-# Atualiza a lista de pacotes e o sistema
-pkg update && pkg upgrade -y
+**Agora, execute os comandos de instalação:**
+Abra o Termux e siga a numeração, um comando de cada vez:
 
-# Instala as ferramentas essenciais: Python, Git e Screen
-pkg install python git screen -y
+1.  `pkg update && pkg upgrade -y`
+2.  `pkg install python git screen -y`
+3.  `pip install --upgrade pip`
+4.  `git clone https://github.com/tumioka8-design/botvenda.git`
+5.  `cd botvenda`
+6.  `pip install -r requirements.txt`
+7.  `screen -S bot`
+8.  `python bot.py`
 
-# Instala o 'pip' para gerenciar pacotes Python
-pkg install python-pip -y
+**Para deixar o bot rodando em segundo plano:**
+Após o último comando, o bot estará online. Para mantê-lo funcionando, pressione a seguinte combinação de teclas:
+*   Ctrl + A (pressione e solte)
+*   Depois, a tecla D
 
+Pronto! Agora você pode fechar o Termux.
 
-# --- PASSO 2: BAIXAR O CÓDIGO DO BOT ---
+---
+### COMANDOS ÚTEIS
 
-# Clone (baixe) o seu projeto do GitHub.
-# SUBSTITUA A URL ABAIXO PELA URL DO SEU REPOSITÓRIO!
-git clone https://github.com/seu-usuario/seu-repositorio.git
+*   **Para ver o que o bot está fazendo:**
+    `screen -r bot`
 
-# Entre na pasta do seu projeto.
-# SUBSTITUA 'seu-repositorio' PELO NOME DA PASTA QUE FOI CRIADA.
-cd seu-repositorio
+*   **Para parar o bot (dentro da tela do bot):**
+    Pressione Ctrl + C
 
-# Se o seu código estiver dentro de uma subpasta (ex: AcessosBot), entre nela.
-# Se não, pule esta linha.
-cd AcessosBot
-
-
-# --- PASSO 3: INSTALAR AS DEPENDÊNCIAS DO BOT ---
-
-# Instala todas as bibliotecas Python que o bot precisa
-pip install -r requirements.txt
-
-
-# --- PASSO 4: INICIAR O BOT EM SEGUNDO PLANO ---
-
-# Cria uma nova "janela" virtual chamada 'bot'
-screen -S bot
-
-# Dentro da nova tela que aparecer, execute o bot:
-python bot.py
-
-# AGORA, PARA DEIXAR RODANDO EM SEGUNDO PLANO:
-# Pressione as teclas: Ctrl + A, e depois a tecla D.
-# Isso vai "desconectar" você da tela, mas o bot continuará rodando.
-
-
-# --- COMANDOS ÚTEIS PARA GERENCIAR O BOT ---
-
-# Para ver os logs do bot (reatachar à sessão):
-# screen -r bot
-
-# Para parar o bot (dentro da sessão screen):
-# Pressione Ctrl + C
-
-# Para atualizar o código do bot com as novidades do GitHub:
-# (Execute estes comandos na pasta do seu projeto)
-# git pull
-
-# Para listar todas as sessões screen ativas:
-# screen -ls
+*   **Para atualizar o bot:**
+    `cd botvenda`
+    `git pull`
