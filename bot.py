@@ -1660,6 +1660,22 @@ def inline_message(query):
             result = types.InlineQueryResultArticle(id=str(random.randint(1, 99999)), title=title, description=description, input_message_content=types.InputTextMessageContent(f'{text}', parse_mode='HTML'), reply_markup=markup, thumb_url='https://png.pngtree.com/png-vector/20190217/ourlarge/pngtree-vector-send-message-icon-png-image_558846.jpg')
     bot.answer_inline_query(query.id, [result], cache_time=0)
 
+@bot.message_handler(commands=['log'])
+def handle_log_command(message):
+    """Gera e envia um log completo de todos os produtos em estoque."""
+    # Verifica se o usuário é o dono do bot
+    if int(message.from_user.id) != int(api.CredentialsChange.id_dono()):
+        bot.reply_to(message, "❌ Este comando é restrito ao desenvolvedor.")
+        return
+
+    try:
+        bot.reply_to(message, "Gerando log completo de produtos, por favor aguarde...")
+        log_filepath = api.Admin.gerar_log_completo_produtos()
+        with open(log_filepath, 'rb') as log_file:
+            bot.send_document(message.chat.id, log_file, caption="✅ Log de produtos gerado com sucesso!")
+    except Exception as e:
+        bot.reply_to(message, f"Ocorreu um erro ao gerar o log: {e}")
+
 @bot.message_handler(commands=['start'])
 def handle_start(message, edit_message=False):
     # Ignora comandos de start em grupos que não são direcionados explicitamente ao bot

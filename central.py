@@ -1375,6 +1375,58 @@ class Admin():
                 return "ERRO", status
 
     @staticmethod
+    def gerar_log_completo_produtos():
+        """Gera um arquivo de log com todos os produtos em estoque."""
+        filepath = 'historicos/log_produtos.txt'
+        os.makedirs('historicos', exist_ok=True)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(f"LOG DE PRODUTOS - Gerado em: {ViewTime.data_atual()} as {ViewTime.hora_atual()}\n")
+            f.write("="*50 + "\n\n")
+
+            # 1. Logins (Acessos)
+            logins = ControleLogins.pegar_todos_logins()
+            f.write(f"--- LOGINS ({len(logins)}) ---\n")
+            if not logins:
+                f.write("Nenhum login em estoque.\n")
+            else:
+                for login in logins:
+                    f.write(f"Nome: {login.get('nome', 'N/A')}\n")
+                    f.write(f"  - Valor: R$ {float(login.get('valor', 0)):.2f}\n")
+                    f.write(f"  - Descrição: {login.get('descricao', 'N/A')}\n")
+                    f.write(f"  - Email/User: {login.get('email', 'N/A')}\n")
+                    f.write(f"  - Senha: {login.get('senha', 'N/A')}\n")
+                    f.write(f"  - Info Extra: {login.get('duracao', 'N/A')}\n\n")
+            f.write("\n" + "="*50 + "\n\n")
+
+            # 2. CCs (Cartões de Crédito)
+            ccs = ler_json(Admin.ControleCCs._ccs_path).get("ccs", [])
+            f.write(f"--- CCs ({len(ccs)}) ---\n")
+            if not ccs:
+                f.write("Nenhuma CC em estoque.\n")
+            else:
+                for cc in ccs:
+                    f.write(f"Número: {cc.get('nome', 'N/A')} | Nível: {cc.get('descricao', 'N/A')}\n")
+                    f.write(f"  - Valor: R$ {float(cc.get('valor', 0)):.2f}\n")
+                    f.write(f"  - Validade: {cc.get('senha', 'N/A')} | CVV: {cc.get('duracao', 'N/A')}\n")
+                    f.write(f"  - Titular: {cc.get('titular', 'N/A')} | CPF: {cc.get('cpf', 'N/A')}\n\n")
+            f.write("\n" + "="*50 + "\n\n")
+
+            # 3. GGs (Geradas)
+            ggs = ler_json(Admin.ControleGGs._ggs_path).get("ggs", [])
+            f.write(f"--- GGs ({len(ggs)}) ---\n")
+            if not ggs:
+                f.write("Nenhuma GG em estoque.\n")
+            else:
+                for gg in ggs:
+                    f.write(f"Número: {gg.get('nome', 'N/A')} | Nível: {gg.get('descricao', 'N/A')}\n")
+                    f.write(f"  - Valor: R$ {float(gg.get('valor', 0)):.2f}\n")
+                    f.write(f"  - Validade: {gg.get('senha', 'N/A')} | CVV: {gg.get('duracao', 'N/A')}\n")
+                    f.write(f"  - Titular: {gg.get('titular', 'N/A')} | CPF: {gg.get('cpf', 'N/A')}\n\n")
+            f.write("\n" + "="*50 + "\n\n")
+        return filepath
+
+    @staticmethod
     def total_users():
         data = ler_json('database/users.json')
         return len(data.get("users", []))
